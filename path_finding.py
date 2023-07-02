@@ -1,3 +1,4 @@
+import argparse
 
 from py2neo import Graph
 from py2neo import Node, Relationship
@@ -6,84 +7,62 @@ from main import load_dict, load_data
 from collections import defaultdict, Counter
 from tqdm import tqdm
 import json
+import re
 
 
-def extract_rel_types_from_path(path):
-    result = []
-    for rel in path['r']:
-        result.append(str(rel).split(':')[1].split(' ')[0])
-    return tuple(result)
+def extract_record_triplets(record):
+    record = str(record).replace(' ', '')
+    pattern = r'\((.*?)\)-\[\:(.*?)\{\}\]->\((.*?)\)'
+    match = re.search(pattern, record)
+    return {
+        'head': match.group(1),
+        'relation': match.group(2),
+        'tail': match.group(3)}
 
 
-def reconstruct_rnn_logic_rules(path, dct):
-    rnn_dct = {}
-    with open(path, 'r') as f:
-        lines = [line.strip() for line in f.readlines()]
-    for line in lines:
-        pattern = [dct[int(e)] for e in line.split(' ')]
-        head = pattern[0]
-        if head not in rnn_dct:
-            rnn_dct[head] = Counter()
-        rnn_dct[head][tuple(pattern[1:])] += 1
-    return post_process_patterns(rnn_dct)
-
-
-def post_process_patterns(patterns):
-    new_patterns = {}
-    for key in patterns:
-        total = sum(patterns[key].values())
-        new_patterns[key] = {}
-        new_patterns[key]['total'] = total
-        new_patterns[key]['patterns'] = []
-        for each in patterns[key].most_common():
-            new_patterns[key]['patterns'].append({
-                'key': each[0],
-                'count': each[1],
-                'pct': float('{:.2f}'.format(each[1] / total * 100))
-            })
-    return new_patterns
-
-
-def extract_path_from_train(graph:Graph, df:pd.DataFrame, dataset_name):
-    patterns = {}
+def extract_paths(graph:Graph, df:pd.DataFrame, dataset_name, max_len):
+    patterns = []
     for i, row in tqdm(df.iterrows(), total=len(df)):
         head, relation, tail = row['head'], row['relation'], row['tail']
         # head = 3514
         # tail = 3515
         query = graph.run(f'''
-        MATCH (head{{name:{head}, dt_name:"{dataset_name}"}}), 
-        (tail{{name:{tail}, dt_name:"{dataset_name}" }}),
-        p = (head)-[r*..5]->(tail)
-        RETURN r ORDER BY length(p);
-        ''')
+                MATCH (head{{name:{head}, dt_name:"{dataset_name}"}}), 
+                (tail{{name:{tail}, dt_name:"{dataset_name}" }}),
+                p = (head)-[*1..{max_len}]->(tail)
+                RETURN DISTINCT relationships(p) AS relations;
+                ''')
         paths = query.data()
-        if relation not in patterns:
-            patterns[relation] = Counter()
         for j, path in enumerate(paths):
-            if j > 0:
-                local_path = extract_rel_types_from_path(path)
-                patterns[relation][local_path] += 1
-    return post_process_patterns(patterns)
+            path = path['relations']
+            if len(path) == 1:
+                if extract_record_triplets(path[0])['relation'] == relation:
+                    continue
+            rep_path = [relation]
+            for record in path:
+                rep_path.append(extract_record_triplets(record)['relation'])
+            patterns.append(' '.join(rep_path))
+    return Counter(patterns).most_common()
 
 
 if __name__ == '__main__':
     graph = Graph('bolt://localhost:7687')
-    wn18rr_ent_dct = load_dict('WN18RR/entities.dict')
-    wn18rr_rel_dct = load_dict('WN18RR/relations.dict', inv=True)
-    wn18rr_train = load_data('WN18RR/train.txt', wn18rr_ent_dct)
-    wn18rr_test = load_data('WN18RR/test.txt', wn18rr_ent_dct)
-    # wn18rr_train_patterns = extract_path_from_train(graph, wn18rr_train, 'wn18rr')
-    # wn18rr_test_patterns = extract_path_from_train(graph, wn18rr_test, 'wn18rr')
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", help="Name of dataset", required=True)
+    parser.add_argument("--max_len", help="Max length", required=True)
+    args = parser.parse_args()
+    if args.dataset not in ['WN18RR', 'FB15k-237']:
+        raise ValueError('Wrong dataset name!!!')
+    dataset = args.dataset
+    ent_dct = load_dict(f'{dataset}/entities.dict')
+    rel_dct = load_dict(f'{dataset}/relations.dict')
+    train_data = load_data(f'{dataset}/train.txt', ent_dct)
+    max_len = args.max_len
 
-    # with open('WN18RR/train_patterns.json', 'w') as f:
-    #     json.dump(wn18rr_train_patterns, f, indent=4)
-    # with open('WN18RR/test_patterns.json', 'w') as f:
-    #     json.dump(wn18rr_test_patterns, f, indent=4)
+    patterns = extract_paths(graph, train_data, dataset, max_len)
 
-    # with open('WN18RR/train_patterns.json', 'r') as f:
-    #     wn18rr_patterns = json.load(f)
-    # print(wn18rr_patterns)
+    with open(f'{dataset}/patterns_mxl_{max_len}.txt', 'w') as f:
+        for i, pat in enumerate(patterns):
+            f.write(f'{pat[0]} {pat[1]}\n')
 
-    rnn_logic_patterns = reconstruct_rnn_logic_rules('WN18RR/rnnlogic_rules.txt', wn18rr_rel_dct)
-    with open('WN18RR/rnn_logic_patterns.json', 'w') as f:
-        json.dump(rnn_logic_patterns, f, indent=4)
+

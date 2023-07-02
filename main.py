@@ -2,6 +2,7 @@ from py2neo import Graph
 from py2neo import Node, Relationship
 import pandas as pd
 from tqdm import tqdm
+import argparse
 
 
 def load_dict(path, inv=False):
@@ -16,12 +17,13 @@ def load_dict(path, inv=False):
     return dct
 
 
-def load_data(path, ent_dct):
+def load_data(path, ent_dct, apply_dct=True):
     data = pd.read_csv(path, sep='\t', dtype=str)
     data.columns = ['head', 'relation', 'tail']
-    data['head'] = data['head'].apply(lambda x: ent_dct[x])
-    data['tail'] = data['tail'].apply(lambda x: ent_dct[x])
-    # data['relation'] = data['relation'].apply(lambda x: rel_dct[x])
+    if apply_dct:
+        data['head'] = data['head'].apply(lambda x: ent_dct[x])
+        data['tail'] = data['tail'].apply(lambda x: ent_dct[x])
+        # data['relation'] = data['relation'].apply(lambda x: rel_dct[x])
     return data
 
 
@@ -51,6 +53,7 @@ def add_relations(graph, df, dataset_name):
     print('Creating relations ...')
     for i, row in tqdm(df.iterrows(), total=len(df)):
         head, relation, tail = row['head'], row['relation'], row['tail']
+        inv_relation = '!' + row['relation']
         head_entity = graph.nodes.match('Entity', name=head,
                                         dtype='train', dt_name=dataset_name).first()
         if not head_entity:
@@ -63,66 +66,31 @@ def add_relations(graph, df, dataset_name):
                                             dtype='test', dt_name=dataset_name).first()
 
         relationship = Relationship(head_entity, relation, tail_entity)
+        # create inverse relationship
+        inv_relationship = Relationship(tail_entity, inv_relation, head_entity)
         tx.create(relationship)
+        tx.create(inv_relationship)
     graph.commit(tx)
 
 
-# def add_data(_graph, df, data_type):
-#     tx = _graph.begin()
-#     # Find all entities
-#     head_entities = df['head'].unique().tolist()
-#     tail_entities = df['tail'].unique().tolist()
-#     all_entities = list(set(head_entities + tail_entities))
-#
-#     print('Creating entities ...')
-#     c = 0
-#     for entity in tqdm(all_entities):
-#         if data_type == 'train':
-#             node = Node('Entity', name=entity, dtype='train')
-#             tx.create(node)
-#         else:
-#             node = graph.nodes.match('Entity', name=entity, dtype='train').first()
-#             if not node:
-#                 print(f'{c}. {entity}')
-#                 node = Node('Entity', name=entity, dtype='test')
-#                 tx.create(node)
-#     _graph.commit(tx)
-#
-#     tx = graph.begin()
-#     print('Creating relations ...')
-#     for i, row in tqdm(df.iterrows(), total=len(df)):
-#         head, relation, tail = row['head'], row['relation'], row['tail']
-#         head_entity = graph.nodes.match('Entity', name=head, dtype='train').first()
-#         if not head_entity:
-#             head_entity = graph.nodes.match('Entity', name=head, dtype='test').first()
-#         tail_entity = graph.nodes.match('Entity', name=tail, dtype='train').first()
-#         if not head_entity:
-#             tail_entity = graph.nodes.match('Entity', name=tail, dtype='test').first()
-#
-#         relationship = Relationship(head_entity, relation, tail_entity)
-#         tx.create(relationship)
-#     _graph.commit(tx)
-
-
 if __name__ == '__main__':
+    # sudo systemctl start neo4j.service
+    # MATCH (n)
+    # DETACH DELETE n
     graph = Graph('bolt://localhost:7687')
-    wn18rr_ent_dct = load_dict('WN18RR/entities.dict')
-    wn18rr_rel_dct = load_dict('WN18RR/relations.dict')
-    wn18rr_train = load_data('WN18RR/train.txt', wn18rr_ent_dct)
-    # wn18rr_test = load_data('WN18RR/test.txt', wn18rr_ent_dct)
-    # add_entities(graph, wn18rr_train, 'train', 'wn18rr')
-    # add_entities(graph, wn18rr_test, 'test', 'wn18rr')
-    add_relations(graph, wn18rr_train, 'wn18rr')
-    # add_relations(graph, wn18rr_test, 'wn18rr')
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", help="Name of dataset", required=True)
+    args = parser.parse_args()
 
-    fb15k_237_ent_dct = load_dict('FB15k-237/entities.dict')
-    fb15k_237_rel_dct = load_dict('FB15k-237/relations.dict')
-    fb15k_train = load_data('FB15k-237/train.txt', fb15k_237_ent_dct)
-    # fb15k_test = load_data('FB15k-237/test.txt')
-    add_entities(graph, fb15k_train, 'train', 'fb15k-237')
-    # add_entities(graph, fb15k_test, 'test', 'fb15k-237')
-    add_relations(graph, fb15k_train, 'fb15k-237')
-    # add_relations(graph, fb15k_test, 'fb15k-237')
+    if args.dataset not in ['WN18RR', 'FB15k-237']:
+        raise ValueError('Wrong dataset name!!!')
+    dataset = args.dataset
+    ent_dct = load_dict(f'{dataset}/entities.dict')
+    rel_dct = load_dict(f'{dataset}/relations.dict')
+    train_data = load_data(f'{dataset}/train.txt', ent_dct)
+    # test_data = load_data(f'{dataset}/test.txt', ent_dct)
+    # add_entities(graph, train_data, 'train', dataset)
+    add_relations(graph, train_data, dataset)
 
 
 
