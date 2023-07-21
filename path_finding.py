@@ -1,5 +1,4 @@
 import argparse
-
 from py2neo import Graph
 from py2neo import Node, Relationship
 import pandas as pd
@@ -20,28 +19,52 @@ def extract_record_triplets(record):
         'tail': match.group(3)}
 
 
+def query_path(graph, relation, from_entity, to_entity, dataset_name, max_len):
+    query = graph.run(f'''
+            MATCH (from_entity{{name:{from_entity}, dt_name:"{dataset_name}"}}), 
+            (to_entity{{name:{to_entity}, dt_name:"{dataset_name}" }}),
+            p = (from_entity)-[*1..{max_len}]->(to_entity)
+            RETURN DISTINCT relationships(p) AS relations;
+    ''')
+    results = []
+    paths = query.data()
+    for j, path in enumerate(paths):
+        path = path['relations']
+        if len(path) == 1:
+            if extract_record_triplets(path[0])['relation'] == relation:
+                continue
+        rep_path = [relation]
+        for record in path:
+            rep_path.append(extract_record_triplets(record)['relation'])
+        results.append(' '.join(rep_path))
+    return results
+
+
+def inverse_relation(relation: str):
+    if relation.startswith('!'):
+        return relation.lstrip('!')
+    return '!' + relation
+
+
 def extract_paths(graph:Graph, df:pd.DataFrame, dataset_name, max_len):
     patterns = []
     for i, row in tqdm(df.iterrows(), total=len(df)):
+        # head -> tail direction
         head, relation, tail = row['head'], row['relation'], row['tail']
-        # head = 3514
-        # tail = 3515
-        query = graph.run(f'''
-                MATCH (head{{name:{head}, dt_name:"{dataset_name}"}}), 
-                (tail{{name:{tail}, dt_name:"{dataset_name}" }}),
-                p = (head)-[*1..{max_len}]->(tail)
-                RETURN DISTINCT relationships(p) AS relations;
-                ''')
-        paths = query.data()
-        for j, path in enumerate(paths):
-            path = path['relations']
-            if len(path) == 1:
-                if extract_record_triplets(path[0])['relation'] == relation:
-                    continue
-            rep_path = [relation]
-            for record in path:
-                rep_path.append(extract_record_triplets(record)['relation'])
-            patterns.append(' '.join(rep_path))
+        head2tail_paths = query_path(graph=graph,
+                                     relation=relation,
+                                     from_entity=head,
+                                     to_entity=tail,
+                                     dataset_name=dataset_name,
+                                     max_len=max_len)
+        tail2head_paths = query_path(graph=graph,
+                                     relation=inverse_relation(relation),
+                                     from_entity=tail,
+                                     to_entity=head,
+                                     dataset_name=dataset_name,
+                                     max_len=max_len)
+        patterns.extend(head2tail_paths)
+        patterns.extend(tail2head_paths)
     return Counter(patterns).most_common()
 
 
@@ -57,11 +80,10 @@ if __name__ == '__main__':
     ent_dct = load_dict(f'{dataset}/entities.dict')
     rel_dct = load_dict(f'{dataset}/relations.dict')
     train_data = load_data(f'{dataset}/train.txt', ent_dct)
-    max_len = args.max_len
 
-    patterns = extract_paths(graph, train_data, dataset, max_len)
+    patterns = extract_paths(graph, train_data, dataset, args.max_len)
 
-    with open(f'{dataset}/patterns_mxl_{max_len}.txt', 'w') as f:
+    with open(f'{dataset}/patterns_mxl_{args.max_len}.txt', 'w') as f:
         for i, pat in enumerate(patterns):
             f.write(f'{pat[0]} {pat[1]}\n')
 
