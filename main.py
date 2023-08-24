@@ -3,6 +3,7 @@ from py2neo import Node, Relationship
 import pandas as pd
 from tqdm import tqdm
 import argparse
+import random
 
 
 def load_dict(path, inv=False):
@@ -17,13 +18,20 @@ def load_dict(path, inv=False):
     return dct
 
 
-def load_data(path, ent_dct, apply_dct=True):
+# def load_data(path, ent_dct, apply_dct=True):
+#     data = pd.read_csv(path, sep='\t', dtype=str)
+#     data.columns = ['head', 'relation', 'tail']
+#     if apply_dct:
+#         data['head'] = data['head'].apply(lambda x: ent_dct[x])
+#         data['tail'] = data['tail'].apply(lambda x: ent_dct[x])
+#         # data['relation'] = data['relation'].apply(lambda x: rel_dct[x])
+#     return data
+
+def load_data(path):
     data = pd.read_csv(path, sep='\t', dtype=str)
     data.columns = ['head', 'relation', 'tail']
-    if apply_dct:
-        data['head'] = data['head'].apply(lambda x: ent_dct[x])
-        data['tail'] = data['tail'].apply(lambda x: ent_dct[x])
-        # data['relation'] = data['relation'].apply(lambda x: rel_dct[x])
+    data['head'] = data['head'].apply(lambda x: 'E' + str(x))
+    data['tail'] = data['tail'].apply(lambda x: 'E' + str(x))
     return data
 
 
@@ -73,6 +81,17 @@ def add_relations(graph, df, dataset_name):
     graph.commit(tx)
 
 
+def sample_training_data(in_path, out_path, portion=0.2):
+    with open(in_path, 'r') as f:
+        data = f.readlines()
+        data = [line.strip() for line in data]
+        print('Data length: ', len(data))
+        data = random.sample(data, int(len(data) * portion))
+        print('Sample length: ', len(data))
+    with open(out_path, 'w') as f:
+        f.writelines([line + '\n' for line in data])
+
+
 if __name__ == '__main__':
     # sudo systemctl start neo4j.service
     # MATCH (n)
@@ -85,11 +104,14 @@ if __name__ == '__main__':
     if args.dataset not in ['WN18RR', 'FB15k-237']:
         raise ValueError('Wrong dataset name!!!')
     dataset = args.dataset
-    ent_dct = load_dict(f'{dataset}/entities.dict')
-    rel_dct = load_dict(f'{dataset}/relations.dict')
-    train_data = load_data(f'{dataset}/train.txt', ent_dct)
-    # test_data = load_data(f'{dataset}/test.txt', ent_dct)
-    # add_entities(graph, train_data, 'train', dataset)
+
+    # sample_training_data(f'{dataset}/train.txt',
+    #                      f'{dataset}/train_sampled.txt')
+
+    # ent_dct = load_dict(f'{dataset}/entities.dict')
+    # rel_dct = load_dict(f'{dataset}/relations.dict')
+    train_data = load_data(f'{dataset}/train.txt')
+    add_entities(graph, train_data, 'train', dataset)
     add_relations(graph, train_data, dataset)
 
 

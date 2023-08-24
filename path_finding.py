@@ -21,12 +21,12 @@ def extract_record_triplets(record):
 
 def query_path(graph, relation, from_entity, to_entity, dataset_name, max_len):
     query = graph.run(f'''
-            MATCH (from_entity{{name:{from_entity}, dt_name:"{dataset_name}"}}), 
-            (to_entity{{name:{to_entity}, dt_name:"{dataset_name}" }}),
+            MATCH (from_entity{{name:"{from_entity}", dt_name:"{dataset_name}"}}), 
+            (to_entity{{name:"{to_entity}", dt_name:"{dataset_name}" }}),
             p = (from_entity)-[*1..{max_len}]->(to_entity)
-            RETURN DISTINCT relationships(p) AS relations;
+            RETURN DISTINCT relationships(p) AS relations, nodes(p) as nodes;
     ''')
-    results = []
+    results = set()
     paths = query.data()
     for j, path in enumerate(paths):
         path = path['relations']
@@ -36,8 +36,8 @@ def query_path(graph, relation, from_entity, to_entity, dataset_name, max_len):
         rep_path = [relation]
         for record in path:
             rep_path.append(extract_record_triplets(record)['relation'])
-        results.append(' '.join(rep_path))
-    return results
+        results.add(' '.join(rep_path))
+    return list(results)
 
 
 def inverse_relation(relation: str):
@@ -65,7 +65,15 @@ def extract_paths(graph:Graph, df:pd.DataFrame, dataset_name, max_len):
                                      max_len=max_len)
         patterns.extend(head2tail_paths)
         patterns.extend(tail2head_paths)
-    return Counter(patterns).most_common()
+    return sorted(Counter(patterns).most_common(),
+                  key=lambda x: (x[0].split()[0], -x[1]))
+
+
+def count_relation(df:pd.DataFrame):
+    rel_count = Counter(df['relation'].tolist())
+    for key in list(rel_count.keys()):
+        rel_count['!' + key] = rel_count[key]
+    return rel_count
 
 
 if __name__ == '__main__':
@@ -79,12 +87,13 @@ if __name__ == '__main__':
     dataset = args.dataset
     ent_dct = load_dict(f'{dataset}/entities.dict')
     rel_dct = load_dict(f'{dataset}/relations.dict')
-    train_data = load_data(f'{dataset}/train.txt', ent_dct)
+    train_data = load_data(f'{dataset}/train.txt')
+    relation_count = count_relation(train_data)
 
     patterns = extract_paths(graph, train_data, dataset, args.max_len)
 
     with open(f'{dataset}/patterns_mxl_{args.max_len}.txt', 'w') as f:
         for i, pat in enumerate(patterns):
-            f.write(f'{pat[0]} {pat[1]}\n')
+            f.write(f'{pat[0]} {pat[1]} {round(pat[1] / relation_count[pat[0].split()[0]], 3)}\n')
 
 
