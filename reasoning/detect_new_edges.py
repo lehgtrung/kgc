@@ -17,9 +17,7 @@ def normalize_relation(x: str):
     x = x.lstrip('_')
     splits = x.split('_')
     if inv_flag:
-        # return 'inv' + ''.join([e.capitalize() for e in splits])
         return 'inv' + ''.join([e for e in splits])
-    # return splits[0] + ''.join([e.capitalize() for e in splits[1:]])
     return ''.join([e for e in splits])
 
 
@@ -100,7 +98,6 @@ def solve(command):
     atoms = answerset[0]
     atoms = atoms.split(' ')
     return atoms
-
 
 
 if __name__ == '__main__':
