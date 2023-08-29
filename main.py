@@ -18,15 +18,6 @@ def load_dict(path, inv=False):
     return dct
 
 
-# def load_data(path, ent_dct, apply_dct=True):
-#     data = pd.read_csv(path, sep='\t', dtype=str)
-#     data.columns = ['head', 'relation', 'tail']
-#     if apply_dct:
-#         data['head'] = data['head'].apply(lambda x: ent_dct[x])
-#         data['tail'] = data['tail'].apply(lambda x: ent_dct[x])
-#         # data['relation'] = data['relation'].apply(lambda x: rel_dct[x])
-#     return data
-
 def load_data(path):
     data = pd.read_csv(path, sep='\t', dtype=str)
     data.columns = ['head', 'relation', 'tail']
@@ -35,7 +26,7 @@ def load_data(path):
     return data
 
 
-def add_entities(graph, df, data_type, dataset_name):
+def add_entities(graph, df, dataset_name):
     tx = graph.begin()
     # Find all entities
     head_entities = df['head'].unique().tolist()
@@ -44,15 +35,8 @@ def add_entities(graph, df, data_type, dataset_name):
 
     print('Creating entities ...')
     for entity in tqdm(all_entities):
-        if data_type == 'train':
-            node = Node('Entity', name=entity, dtype='train', dt_name=dataset_name)
-            tx.create(node)
-        else:
-            node = graph.nodes.match('Entity', name=entity,
-                                     dtype='train', dt_name=dataset_name).first()
-            if not node:
-                node = Node('Entity', name=entity, dtype='test', dt_name=dataset_name)
-                tx.create(node)
+        node = Node('Entity', name=entity, dtype='train', dt_name=dataset_name)
+        tx.create(node)
     graph.commit(tx)
 
 
@@ -64,17 +48,10 @@ def add_relations(graph, df, dataset_name):
         inv_relation = '!' + row['relation']
         head_entity = graph.nodes.match('Entity', name=head,
                                         dtype='train', dt_name=dataset_name).first()
-        if not head_entity:
-            head_entity = graph.nodes.match('Entity', name=head,
-                                            dtype='test', dt_name=dataset_name).first()
         tail_entity = graph.nodes.match('Entity', name=tail,
                                         dtype='train', dt_name=dataset_name).first()
-        if not tail_entity:
-            tail_entity = graph.nodes.match('Entity', name=tail,
-                                            dtype='test', dt_name=dataset_name).first()
 
         relationship = Relationship(head_entity, relation, tail_entity)
-        # create inverse relationship
         inv_relationship = Relationship(tail_entity, inv_relation, head_entity)
         tx.create(relationship)
         tx.create(inv_relationship)
@@ -96,6 +73,7 @@ if __name__ == '__main__':
     # sudo systemctl start neo4j.service
     # MATCH (n)
     # DETACH DELETE n
+    # http://localhost:7474/browser/
     graph = Graph('bolt://localhost:7687')
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", help="Name of dataset", required=True)
@@ -106,12 +84,11 @@ if __name__ == '__main__':
     dataset = args.dataset
 
     # sample_training_data(f'{dataset}/train.txt',
-    #                      f'{dataset}/train_sampled.txt')
+    #                      f'{dataset}/train_sampled.txt',
+    #                      0.1)
 
-    # ent_dct = load_dict(f'{dataset}/entities.dict')
-    # rel_dct = load_dict(f'{dataset}/relations.dict')
     train_data = load_data(f'{dataset}/train.txt')
-    add_entities(graph, train_data, 'train', dataset)
+    add_entities(graph, train_data, dataset)
     add_relations(graph, train_data, dataset)
 
 
