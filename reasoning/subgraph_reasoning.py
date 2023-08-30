@@ -1,5 +1,7 @@
 import argparse
 import ast
+import os
+
 from py2neo import Graph
 from py2neo import Node, Relationship
 import re
@@ -57,13 +59,13 @@ def test_subgraph_extraction(graph):
         p = (center)-[*..3]-(subgraph)
         RETURN DISTINCT relationships(p) AS relations;
     """
-    expected_result = {'linkedto(Node2,Node3).',
-                       'linkedto(Node3,Node4).',
-                       'linkedto(Node8,Node4).',
-                       'linkedto(Node1,Node2).',
-                       'linkedto(Node7,Node1).',
-                       'linkedto(Node5,Node2).',
-                       'linkedto(Node6,Node5).'}
+    expected_result = {'linked_to(Node2,Node3).',
+                       'linked_to(Node3,Node4).',
+                       'linked_to(Node8,Node4).',
+                       'linked_to(Node1,Node2).',
+                       'linked_to(Node7,Node1).',
+                       'linked_to(Node5,Node2).',
+                       'linked_to(Node6,Node5).'}
     assert expected_result == extract_subgraph_as_atoms(query)
 
 
@@ -104,10 +106,27 @@ def extract_subgraphs(df: pd.DataFrame,
 
 if __name__ == '__main__':
     graph = Graph('bolt://localhost:7687')
-    test_subgraph_extraction(graph=graph)
-    df = load_data_raw('../WN18RR/test.txt')
-    out_path = 'WN18RR_2hops/{idx}.txt'
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", help="Name of dataset", required=True)
+    parser.add_argument("--part", help="Part number", type=int, required=True)
+    args = parser.parse_args()
+
+    if args.dataset not in ['WN18RR', 'FB15k-237']:
+        raise ValueError('Wrong dataset name!!!')
+    dataset = args.dataset
+    part = args.part
+
+    df = load_data_raw(f'../WN18RR/splits/part_{part}.txt')
+    out_dir = f'WN18RR_train_2hops/part={part}'
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    out_path = out_dir + '/{idx}.txt'
     extract_subgraphs(df, 'train', 'WN18RR', out_path)
+
+    # test_subgraph_extraction(graph=graph)
+    # df = load_data_raw('../WN18RR/test.txt')
+    # out_path = 'WN18RR_test_2hops/{idx}.txt'
+    # extract_subgraphs(df, 'train', 'WN18RR', out_path)
 
 
 

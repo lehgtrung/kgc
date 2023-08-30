@@ -18,11 +18,24 @@ def load_dict(path, inv=False):
     return dct
 
 
+def normalize_relation(x: str):
+    inv_flag = False
+    if x.startswith('!'):
+        inv_flag = True
+        x = x.lstrip('!')
+    x = x.lstrip('_')
+    if inv_flag:
+        return 'inv_' + x
+    return x
+
+
 def load_data(path):
-    data = pd.read_csv(path, sep='\t', dtype=str)
+    data = pd.read_csv(path, sep='\t', dtype=str, header=None)
     data.columns = ['head', 'relation', 'tail']
-    data['head'] = data['head'].apply(lambda x: 'E' + str(x))
-    data['tail'] = data['tail'].apply(lambda x: 'E' + str(x))
+    data['head'] = data['head'].apply(lambda x: 'e' + str(x))
+    data['tail'] = data['tail'].apply(lambda x: 'e' + str(x))
+    data['relation'] = data['relation'].apply(lambda x: normalize_relation(x))
+    data['inv_relation'] = data['relation'].apply(lambda x: normalize_relation('!' + x))
     return data
 
 
@@ -44,8 +57,8 @@ def add_relations(graph, df, dataset_name):
     tx = graph.begin()
     print('Creating relations ...')
     for i, row in tqdm(df.iterrows(), total=len(df)):
-        head, relation, tail = row['head'], row['relation'], row['tail']
-        inv_relation = '!' + row['relation']
+        head, relation, inv_relation, tail = row['head'], row['relation'], \
+                                             row['inv_relation'], row['tail']
         head_entity = graph.nodes.match('Entity', name=head,
                                         dtype='train', dt_name=dataset_name).first()
         tail_entity = graph.nodes.match('Entity', name=tail,
@@ -69,6 +82,26 @@ def sample_training_data(in_path, out_path, portion=0.2):
         f.writelines([line + '\n' for line in data])
 
 
+def split_list_into_n_sublists(in_path, out_path, n_parts=6):
+    with open(in_path, 'r') as f:
+        data = f.readlines()
+        data = [line.strip() for line in data]
+    avg = len(data) // n_parts
+    remainder = len(data) % n_parts
+    sublists = []
+    start = 0
+
+    for i in range(n_parts):
+        sublist_size = avg + (1 if i < remainder else 0)
+        sublists.append(data[start:start + sublist_size])
+        start += sublist_size
+        print(f'Part {i} size: {len(sublists[-1])}')
+
+    for i in range(n_parts):
+        with open(out_path.format(i=i), 'w') as f:
+            f.writelines([line + '\n' for line in sublists[i]])
+
+
 if __name__ == '__main__':
     # sudo systemctl start neo4j.service
     # MATCH (n)
@@ -87,9 +120,13 @@ if __name__ == '__main__':
     #                      f'{dataset}/train_sampled.txt',
     #                      0.1)
 
-    train_data = load_data(f'{dataset}/train.txt')
-    add_entities(graph, train_data, dataset)
-    add_relations(graph, train_data, dataset)
+    # train_data = load_data(f'{dataset}/train.txt')
+    # add_entities(graph, train_data, dataset)
+    # add_relations(graph, train_data, dataset)
+
+    # split_list_into_n_sublists(f'{dataset}/train.txt',
+    #                            dataset + '/splits/part_{i}.txt',
+    #                            6)
 
 
 

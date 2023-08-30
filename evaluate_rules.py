@@ -118,7 +118,7 @@ if __name__ == '__main__':
     dataset = args.dataset
     ent_dct = load_dict(f'{dataset}/entities.dict')
     rel_dct = load_dict(f'{dataset}/relations.dict')
-    test_data = load_data(f'{dataset}/test.txt', ent_dct)
+    test_data = load_data(f'{dataset}/test.txt')
 
     algo_rule_path = f'{dataset}/reg_patterns_mxl_3.txt'
     rnnlogic_rule_path = f'{dataset}/rnnlogic_rules_decoded.txt'

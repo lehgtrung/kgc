@@ -1,6 +1,7 @@
 WN18RR/
 FB15k-237/
-reasoning/WN18RR_2hops/
+reasoning/WN18RR_train_2hops/
+reasoning/WN18RR_test_2hops/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
