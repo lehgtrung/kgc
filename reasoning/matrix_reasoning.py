@@ -43,14 +43,14 @@ def encode_data_as_adj_mat(df:pd.DataFrame):
     return _sparse_adj_mat, _entity_list, _relation_list
 
 
-def encode_rules(rule_path, max_rank=1000):
+def encode_rules(rule_path, max_rank=10):
     with open(rule_path, 'r') as f:
         raw_rule_list = [e.strip() for e in f.readlines()]
     rules = {}
     for line in raw_rule_list:
         line = line.split()
-        # if float(line[-1]) < 0.1:
-        #     continue
+        if float(line[-1]) < 0.1:
+            continue
         rule_head = normalize_relation(line[0])
         rule_conf = float(line[-1])
         rule_body = [normalize_relation(e) for e in line[1:-2]]
@@ -101,6 +101,14 @@ def mean_reciprocal_rank(arr):
     return 1/len(arr) * mrr
 
 
+def hit_at(arr, at=10):
+    hit = 0
+    for rank in arr:
+        if rank <= at:
+            hit += 1
+    return hit / len(arr)
+
+
 def answer_queries(df_test: pd.DataFrame, matrix_results: dict, entity_list: list):
     mrr = []
     out_of_dist_count = 0
@@ -137,7 +145,8 @@ if __name__ == '__main__':
     mrr = answer_queries(df_test, rules_at_mat, entity_list)
     # mrr = answer_queries(df_train, rules_at_mat, entity_list)
     print(mrr)
-    print(mean_reciprocal_rank(mrr))
+    print('MRR: ', mean_reciprocal_rank(mrr))
+    print('Hit@10: ', hit_at(mrr, 10))
 
 
 
