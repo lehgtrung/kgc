@@ -17,8 +17,8 @@ else:
 
 
 def encode_data_as_adj_mat(df:pd.DataFrame):
-    adj_mat = {}
-    sparse_adj_mat = {}
+    _adj_mat = {}
+    _sparse_adj_mat = {}
     _entity_list = list(set(df['head'].to_list() + df['tail'].to_list()))
     _relation_list = list(set(df['relation'].to_list() + df['inv_relation'].to_list()))
     num_entities = len(_entity_list)
@@ -28,17 +28,17 @@ def encode_data_as_adj_mat(df:pd.DataFrame):
         relation = row['relation']
         inv_relation = row['inv_relation']
 
-        adj_mat[relation] = np.zeros((num_entities, num_entities))
-        adj_mat[relation][head_idx][tail_idx] = 1.0
+        _adj_mat[relation] = np.zeros((num_entities, num_entities))
+        _adj_mat[relation][head_idx][tail_idx] = 1.0
 
-        adj_mat[inv_relation] = np.zeros((num_entities, num_entities))
-        adj_mat[inv_relation][tail_idx][head_idx] = 1.0
+        _adj_mat[inv_relation] = np.zeros((num_entities, num_entities))
+        _adj_mat[inv_relation][tail_idx][head_idx] = 1.0
 
-    for key in adj_mat:
-        sparse_adj_mat[key] = torch.tensor(adj_mat[key])
+    for key in _adj_mat:
+        _sparse_adj_mat[key] = torch.tensor(_adj_mat[key])
         # sparse_adj_mat[key] = csr_matrix(adj_mat[key])
-        sparse_adj_mat[key] = sparse_adj_mat[key].to_sparse()
-    return sparse_adj_mat, entity_list, _relation_list
+        _sparse_adj_mat[key] = sparse_adj_mat[key].to_sparse()
+    return _sparse_adj_mat, _entity_list, _relation_list
 
 
 def encode_rules(rule_path, max_rank=4):
