@@ -11,12 +11,12 @@ import torch
 def encode_data_as_adj_mat(df:pd.DataFrame):
     adj_mat = {}
     sparse_adj_mat = {}
-    entity_list = list(set(df['head'].to_list() + df['tail'].to_list()))
-    relation_list = list(set(df['relation'].to_list() + df['inv_relation'].to_list()))
-    num_entities = len(entity_list)
+    _entity_list = list(set(df['head'].to_list() + df['tail'].to_list()))
+    _relation_list = list(set(df['relation'].to_list() + df['inv_relation'].to_list()))
+    num_entities = len(_entity_list)
     for i, row in tqdm(df.iterrows(), total=len(df)):
-        head_idx = entity_list.index(row['head'])
-        tail_idx = entity_list.index(row['tail'])
+        head_idx = _entity_list.index(row['head'])
+        tail_idx = _entity_list.index(row['tail'])
         relation = row['relation']
         inv_relation = row['inv_relation']
 
@@ -30,7 +30,7 @@ def encode_data_as_adj_mat(df:pd.DataFrame):
         sparse_adj_mat[key] = torch.tensor(adj_mat[key])
         # sparse_adj_mat[key] = csr_matrix(adj_mat[key])
         sparse_adj_mat[key] = sparse_adj_mat[key].to_sparse()
-    return sparse_adj_mat, entity_list, relation_list
+    return sparse_adj_mat, entity_list, _relation_list
 
 
 def encode_rules(rule_path, max_rank=4):
@@ -95,11 +95,11 @@ def answer_queries(df_test: pd.DataFrame, matrix_results: dict, entity_list: lis
     mrr = []
     out_of_dist_count = 0
     for i, row in df_test.iterrows():
-        head_idx = entity_list.index(row['head'])
-        tail_idx = entity_list.index(row['tail'])
-        if head_idx not in entity_list or tail_idx not in entity_list:
+        if row['head'] not in entity_list or row['tail'] not in entity_list:
             out_of_dist_count += 1
             continue
+        head_idx = entity_list.index(row['head'])
+        tail_idx = entity_list.index(row['tail'])
         relation = row['relation']
         inv_relation = row['inv_relation']
 
