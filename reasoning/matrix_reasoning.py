@@ -41,7 +41,7 @@ def encode_data_as_adj_mat(df:pd.DataFrame):
     return _sparse_adj_mat, _entity_list, _relation_list
 
 
-def encode_rules(rule_path, max_rank=4):
+def encode_rules(rule_path, max_rank=10):
     with open(rule_path, 'r') as f:
         raw_rule_list = [e.strip() for e in f.readlines()]
     rules = {}
@@ -132,8 +132,8 @@ if __name__ == '__main__':
 
     rules_at_mat = rule_as_mat_mul(sparse_adj_mat, rules, len(entity_list))
     print('Finish encoding rules')
-    # mrr = answer_queries(df_test, rules_at_mat, entity_list)
-    mrr = answer_queries(df_train, rules_at_mat, entity_list)
+    mrr = answer_queries(df_test, rules_at_mat, entity_list)
+    # mrr = answer_queries(df_train, rules_at_mat, entity_list)
     print(mrr)
     print(mean_reciprocal_rank(mrr))
 
