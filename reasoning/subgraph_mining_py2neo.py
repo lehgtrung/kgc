@@ -1,6 +1,7 @@
 import argparse
 import ast
 import os
+import time
 
 from py2neo import Graph
 from py2neo import Node, Relationship
@@ -27,8 +28,12 @@ def triplet2atom(triplet, normalize=True):
     return f'{relation}({head},{tail}).'
 
 
-def extract_subgraph_as_atoms(query):
+def extract_subgraph_as_atoms(graph, query):
+    # start_time = time.time()
     paths = graph.run(query).data()
+    # end_time = time.time()
+    # elapsed_time = end_time - start_time
+    # print("Elapsed Time:", elapsed_time, "seconds")
     triplets = []
     for j, path in enumerate(paths):
         path = path['relations']
@@ -66,10 +71,11 @@ def test_subgraph_extraction(graph):
                        'linked_to(Node7,Node1).',
                        'linked_to(Node5,Node2).',
                        'linked_to(Node6,Node5).'}
-    assert expected_result == extract_subgraph_as_atoms(query)
+    assert expected_result == extract_subgraph_as_atoms(graph, query)
 
 
-def extract_subgraphs(df: pd.DataFrame,
+def extract_subgraphs(graph,
+                      df: pd.DataFrame,
                       mode,
                       dataset,
                       out_path):
@@ -89,12 +95,12 @@ def extract_subgraphs(df: pd.DataFrame,
         inv_expected = f'{inv_relation}({tail},{head}).'
 
         query = query_template.format(name=row['head'], dataset=dataset)
-        atoms = extract_subgraph_as_atoms(query)
-        atoms.discard(expected)
+        atoms = extract_subgraph_as_atoms(graph, query)
+        atoms.remove(expected)
 
         query = query_template.format(name=row['tail'], dataset=dataset)
-        inv_atoms = extract_subgraph_as_atoms(query)
-        inv_atoms.discard(inv_expected)
+        inv_atoms = extract_subgraph_as_atoms(graph, query)
+        inv_atoms.remove(inv_expected)
 
         with open(out_path.format(idx=f'{i}.{mode}'), 'w') as f:
             f.write('%' + expected + '\n')
@@ -105,7 +111,7 @@ def extract_subgraphs(df: pd.DataFrame,
 
 
 if __name__ == '__main__':
-    graph = Graph('bolt://localhost:7687')
+    global_graph = Graph('bolt://localhost:7687')
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", help="Name of dataset", required=True)
     parser.add_argument("--part", help="Part number", type=int, required=True)
@@ -117,11 +123,11 @@ if __name__ == '__main__':
     part = args.part
 
     df = load_data_raw(f'../WN18RR/splits/part_{part}.txt')
-    out_dir = f'WN18RR_train_2hops/part={part}'
+    out_dir = f'WN18RR_train_2hops_py2neo/part={part}'
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     out_path = out_dir + '/{idx}.txt'
-    extract_subgraphs(df, 'train', 'WN18RR', out_path)
+    extract_subgraphs(global_graph, df, 'train', 'WN18RR', out_path)
 
     # test_subgraph_extraction(graph=graph)
     # df = load_data_raw('../WN18RR/test.txt')
