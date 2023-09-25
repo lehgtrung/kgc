@@ -91,7 +91,7 @@ def get_rank_at(arr, idx):
     # Create an array of ranks based on the sorted indices
     ranks = np.empty(len(arr), int)
     ranks[sorted_indices] = np.arange(len(arr)) + 1  # Adding 1 to start ranks from 1
-    return ranks[idx]
+    return ranks[idx], arr[idx]
 
 
 def mean_reciprocal_rank(arr):
@@ -111,6 +111,7 @@ def hit_at(arr, at=10):
 
 def answer_queries(df_test: pd.DataFrame, matrix_results: dict, entity_list: list):
     mrr = []
+    values = []
     out_of_dist_count = 0
     for i, row in df_test.iterrows():
         if row['head'] not in entity_list or row['tail'] not in entity_list:
@@ -124,13 +125,15 @@ def answer_queries(df_test: pd.DataFrame, matrix_results: dict, entity_list: lis
         forward_result = matrix_results[relation][head_idx]
         backward_result = matrix_results[inv_relation][tail_idx]
 
-        forward_rank = get_rank_at(forward_result, tail_idx)
-        backward_rank = get_rank_at(backward_result, head_idx)
+        forward_rank, forward_value = get_rank_at(forward_result, tail_idx)
+        backward_rank, backward_value = get_rank_at(backward_result, head_idx)
 
         mrr.append(forward_rank)
         mrr.append(backward_rank)
+        values.append(forward_value)
+        values.append(backward_value)
     print('Number of ood = ', out_of_dist_count)
-    return mrr
+    return mrr, values
 
 
 if __name__ == '__main__':
@@ -143,8 +146,10 @@ if __name__ == '__main__':
     rules_at_mat = rule_as_mat_mul(sparse_adj_mat, rules, len(entity_list))
     print('Finish encoding rules')
     # mrr = answer_queries(df_test, rules_at_mat, entity_list)
-    mrr = answer_queries(df_train, rules_at_mat, entity_list)
+    mrr, values = answer_queries(df_train, rules_at_mat, entity_list)
     print(mrr)
+    print('--------------------------------------')
+    print(values)
     print('MRR: ', mean_reciprocal_rank(mrr))
     print('Hit@10: ', hit_at(mrr, 10))
     print('Hit@3: ', hit_at(mrr, 3))
@@ -155,6 +160,13 @@ if __name__ == '__main__':
     # Hit @ 10: 0.45194938440492477
     # Hit @ 3: 0.3288303693570451
     # Hit @ 1: 0.161593707250342
+
+    # Train data
+    # MRR: 0.7011913358847316
+    # Hit @ 10: 0.9123970749121898
+    # Hit @ 3: 0.798013473829677
+    # Hit @ 1: 0.5779812287672021
+
 
 
 
