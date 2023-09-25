@@ -7,6 +7,14 @@ from scipy.sparse.linalg import spsolve
 from reasoning_utils import *
 import torch
 
+# Check if CUDA (GPU) is available
+cuda_available = torch.cuda.is_available()
+
+if cuda_available:
+    print("CUDA (GPU) is available.")
+else:
+    print("CUDA (GPU) is not available.")
+
 
 def encode_data_as_adj_mat(df:pd.DataFrame):
     adj_mat = {}
