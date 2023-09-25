@@ -147,6 +147,8 @@ if __name__ == '__main__':
     print(mrr)
     print('MRR: ', mean_reciprocal_rank(mrr))
     print('Hit@10: ', hit_at(mrr, 10))
+    print('Hit@3: ', hit_at(mrr, 3))
+    print('Hit@1: ', hit_at(mrr, 1))
 
 
 
