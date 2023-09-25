@@ -93,9 +93,13 @@ def mean_reciprocal_rank(arr):
 
 def answer_queries(df_test: pd.DataFrame, matrix_results: dict, entity_list: list):
     mrr = []
+    out_of_dist_count = 0
     for i, row in df_test.iterrows():
         head_idx = entity_list.index(row['head'])
         tail_idx = entity_list.index(row['tail'])
+        if head_idx not in entity_list or tail_idx not in entity_list:
+            out_of_dist_count += 1
+            continue
         relation = row['relation']
         inv_relation = row['inv_relation']
 
@@ -107,6 +111,7 @@ def answer_queries(df_test: pd.DataFrame, matrix_results: dict, entity_list: lis
 
         mrr.append(forward_rank)
         mrr.append(backward_rank)
+    print('Number of ood = ', out_of_dist_count)
     return mrr
 
 
