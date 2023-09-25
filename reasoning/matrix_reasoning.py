@@ -54,13 +54,13 @@ def encode_rules(rule_path, max_rank=4):
         rule_body = [normalize_relation(e) for e in line[1:-2]]
         if rule_head not in rules:
             rules[rule_head] = []
-        # if len(rules[rule_head]) < max_rank:
-        #     rules[rule_head].append(
-        #         {
-        #             'conf': rule_conf,
-        #             'body': rule_body
-        #         }
-        #     )
+        if len(rules[rule_head]) < max_rank:
+            rules[rule_head].append(
+                {
+                    'conf': rule_conf,
+                    'body': rule_body
+                }
+            )
     return rules
 
 
