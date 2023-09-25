@@ -43,7 +43,7 @@ def encode_data_as_adj_mat(df:pd.DataFrame):
     return _sparse_adj_mat, _entity_list, _relation_list
 
 
-def encode_rules(rule_path, max_rank=10):
+def encode_rules(rule_path, max_rank=4):
     with open(rule_path, 'r') as f:
         raw_rule_list = [e.strip() for e in f.readlines()]
     rules = {}
