@@ -142,13 +142,19 @@ if __name__ == '__main__':
 
     rules_at_mat = rule_as_mat_mul(sparse_adj_mat, rules, len(entity_list))
     print('Finish encoding rules')
-    mrr = answer_queries(df_test, rules_at_mat, entity_list)
-    # mrr = answer_queries(df_train, rules_at_mat, entity_list)
+    # mrr = answer_queries(df_test, rules_at_mat, entity_list)
+    mrr = answer_queries(df_train, rules_at_mat, entity_list)
     print(mrr)
     print('MRR: ', mean_reciprocal_rank(mrr))
     print('Hit@10: ', hit_at(mrr, 10))
     print('Hit@3: ', hit_at(mrr, 3))
     print('Hit@1: ', hit_at(mrr, 1))
+
+    # Test data
+    # MRR: 0.2603472098878333
+    # Hit @ 10: 0.45194938440492477
+    # Hit @ 3: 0.3288303693570451
+    # Hit @ 1: 0.161593707250342
 
 
 
