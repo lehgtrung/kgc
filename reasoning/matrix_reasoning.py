@@ -37,7 +37,7 @@ def encode_data_as_adj_mat(df:pd.DataFrame):
     for key in _adj_mat:
         _sparse_adj_mat[key] = torch.tensor(_adj_mat[key])
         # sparse_adj_mat[key] = csr_matrix(adj_mat[key])
-        _sparse_adj_mat[key] = sparse_adj_mat[key].to_sparse()
+        _sparse_adj_mat[key] = _sparse_adj_mat[key].to_sparse()
     return _sparse_adj_mat, _entity_list, _relation_list
 
 
