@@ -22,16 +22,18 @@ def encode_data_as_adj_mat(df:pd.DataFrame):
     _entity_list = list(set(df['head'].to_list() + df['tail'].to_list()))
     _relation_list = list(set(df['relation'].to_list() + df['inv_relation'].to_list()))
     num_entities = len(_entity_list)
+
+    for rel in _relation_list:
+        _adj_mat[rel] = np.zeros((num_entities, num_entities))
+
     for i, row in tqdm(df.iterrows(), total=len(df)):
         head_idx = _entity_list.index(row['head'])
         tail_idx = _entity_list.index(row['tail'])
         relation = row['relation']
         inv_relation = row['inv_relation']
 
-        _adj_mat[relation] = np.zeros((num_entities, num_entities))
         _adj_mat[relation][head_idx][tail_idx] = 1.0
 
-        _adj_mat[inv_relation] = np.zeros((num_entities, num_entities))
         _adj_mat[inv_relation][tail_idx][head_idx] = 1.0
 
     for key in _adj_mat:
