@@ -12,15 +12,14 @@ def import_dataset_pyg(df: pd.DataFrame, _list_ents, _list_rels):
     _htr_data = HeteroData()
     _htr_data['entity'].x = torch.rand((len(_list_ents), 32))
     for rel in _list_rels:
-        df_query = df.query(f'relation == "{rel}"')
         if not rel.startswith('inv'):
+            df_query = df.query(f'relation == "{rel}"')
             _htr_data['entity', rel, 'entity'].edge_index = torch.tensor([df_query['head_idx'].tolist(),
-                                                                         df_query['tail_idx'].tolist()],
-                                                                         dtype=torch.int32)
+                                                                         df_query['tail_idx'].tolist()])
         else:
+            df_query = df.query(f'inv_relation == "{rel}"')
             _htr_data['entity', rel, 'entity'].edge_index = torch.tensor([df_query['tail_idx'].tolist(),
-                                                                         df_query['head_idx'].tolist()],
-                                                                         dtype=torch.int32)
+                                                                         df_query['head_idx'].tolist()])
     return _htr_data
 
 
