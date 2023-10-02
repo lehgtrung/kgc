@@ -8,7 +8,7 @@ from torch_geometric.data import HeteroData
 import pandas as pd
 
 
-def import_dataset_pyg(df: pd.DataFrame, _list_ents: list[str], _list_rels: list[str]):
+def import_dataset_pyg(df: pd.DataFrame, _list_ents, _list_rels):
     _htr_data = HeteroData()
     _htr_data['entity'].x = torch.rand((len(_list_ents), 32))
     for rel in _list_rels:
@@ -16,11 +16,11 @@ def import_dataset_pyg(df: pd.DataFrame, _list_ents: list[str], _list_rels: list
         if not rel.startswith('inv'):
             _htr_data['entity', rel, 'entity'].edge_index = torch.tensor([df_query['head_idx'].tolist(),
                                                                          df_query['tail_idx'].tolist()],
-                                                                        dtype=torch.int32)
+                                                                         dtype=torch.int32)
         else:
             _htr_data['entity', rel, 'entity'].edge_index = torch.tensor([df_query['tail_idx'].tolist(),
                                                                          df_query['head_idx'].tolist()],
-                                                                        dtype=torch.int32)
+                                                                         dtype=torch.int32)
     return _htr_data
 
 
