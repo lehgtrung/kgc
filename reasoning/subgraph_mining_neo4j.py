@@ -87,7 +87,7 @@ def extract_subgraphs(driver,
 
 
 if __name__ == '__main__':
-    # python subgraph_reasoning_neo4j.py --dataset WN18RR --source train --part 0 --hops 2
+    # python subgraph_mining_neo4j.py --dataset WN18RR --source train --part 0 --hops 2
     URI = "neo4j://localhost:7687"
     global_driver = GraphDatabase.driver(URI)
     parser = argparse.ArgumentParser()

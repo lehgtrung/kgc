@@ -6,6 +6,8 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import spsolve
 from reasoning_utils import *
 import torch
+import re
+import glob
 
 # Check if CUDA (GPU) is available
 cuda_available = torch.cuda.is_available()
@@ -136,6 +138,23 @@ def answer_queries(df_test: pd.DataFrame, matrix_results: dict, entity_list: lis
     return mrr, values
 
 
+def check_if_tail_in_subgraph(path):
+    with open(path, 'r') as f:
+        lines = [e.strip() for e in f.readlines()]
+    query = lines.pop(0)
+    result = re.search(r'\w+\((\w+),(\w+)\)', query)
+    head, tail = result.group(1), result.group(2)
+    head_flag = tail_flag = False
+    for line in lines:
+        if head in line:
+            head_flag = True
+        if tail in line:
+            tail_flag = True
+        if head_flag and tail_flag:
+            return 1
+    return 0
+
+
 if __name__ == '__main__':
     df_train = load_data_raw('../WN18RR/train.txt')
     df_test = load_data_raw('../WN18RR/test.txt')
@@ -170,6 +189,22 @@ if __name__ == '__main__':
     # Hit @ 3: 0.798013473829677
     # Hit @ 1: 0.5779812287672021
 
+    # total = 0
+    # total_pos = 0
+    # for part in range(6):
+    #     paths = glob.glob(f'WN18RR_train_2hops_neo4j/part={part}/*.txt')
+    #     for path in tqdm(paths):
+    #         total_pos += check_if_tail_in_subgraph(path)
+    #         total += 1
+    # print('Pct train: ', total_pos / total)
+
+    # total = 0
+    # total_pos = 0
+    # paths = glob.glob(f'WN18RR_test_3hops_neo4j/*.txt')
+    # for path in tqdm(paths):
+    #     total_pos += check_if_tail_in_subgraph(path)
+    #     total += 1
+    # print('Pct test: ', total_pos / total)
 
 
 

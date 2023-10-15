@@ -36,7 +36,7 @@ class GNN(torch.nn.Module):
 
 
 if __name__ == '__main__':
-    df_train, list_ents, list_rels = load_data_encoded('../WN18RR/test.txt')
+    df_train, list_ents, list_rels = load_data_encoded('../WN18RR/train.txt')
     htr_data = import_dataset_pyg(df_train, list_ents, list_rels).to('cuda')
 
     model = GNN(hidden_channels=64, out_channels=1)

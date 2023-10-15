@@ -2,7 +2,9 @@ WN18RR/
 FB15k-237/
 reasoning/WN18RR_train_2hops_neo4j/
 reasoning/WN18RR_train_3hops_neo4j/
+reasoning/WN18RR_test_2hops_neo4j/
 reasoning/WN18RR_test_3hops_neo4j/
+gnns/WN18RR_train/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
