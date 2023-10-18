@@ -7,7 +7,7 @@ from natsort import natsorted
 from tqdm import tqdm
 import torch
 from dataset_utils import load_data_encoded
-from torch_geometric.data import DataLoader
+from torch_geometric.loader import DataLoader
 
 
 def moves_parts_to_single_dir(base_path, new_base_path, num_parts):
@@ -53,11 +53,14 @@ if __name__ == '__main__':
 
     # output_list_rels_and_ents()
 
-    dataset = KGDataset(root='WN18RR_train', data_dir='WN18RR_train')
-    loader = DataLoader(dataset, batch_size=4, shuffle=True)
+    dataset = KGDataset(root='WN18RR_train', num_neg=16)
+    loader = DataLoader(dataset, batch_size=4, shuffle=False)
 
     for batch in loader:
         print(batch)
+        # print(batch.anchor_mask)
+        # print(batch['entity'].ptr)
+        # print('----------------')
 
 
 

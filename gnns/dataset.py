@@ -9,7 +9,7 @@ from torch_geometric.data import Dataset, HeteroData
 from dataset_utils import *
 
 
-def negative_sampling(anchor_entity, pos_entity, entities, num_neg=32):
+def sample_negative(anchor_entity, pos_entity, entities, num_neg=32):
     neg_samples = []
     for i in range(num_neg):
         neg_sample = random.choice(entities)
@@ -69,48 +69,44 @@ def create_htr_data_from_subgraph(df_subgraph: pd.DataFrame,
                                   global_list_rels,
                                   embeddings,
                                   relation,
-                                  from_index,
-                                  to_index,
-                                  negative_indices):
+                                  anchor_idx,
+                                  pos_idx,
+                                  neg_idx):
     _htr_data = HeteroData()
     _htr_data['entity'].x = embeddings
-    # for rel in global_list_rels:
-    #     if not rel.startswith('inv'):
-    #         df_query = df_subgraph.query(f'relation == "{rel}"')
-    #         _htr_data['entity', rel, 'entity'].edge_index = torch.tensor([df_query['head_idx'].tolist(),
-    #                                                                       df_query['tail_idx'].tolist()])
-    #     else:
-    #         df_query = df_subgraph.query(f'inv_relation == "{rel}"')
-    #         _htr_data['entity', rel, 'entity'].edge_index = torch.tensor([df_query['tail_idx'].tolist(),
-    #                                                                       df_query['head_idx'].tolist()])
+    subgraph_size = len(embeddings)
+    # _htr_data.adj_tensor = torch.zeros(len(global_list_rels),
+    #                                    subgraph_size,
+    #                                    subgraph_size)
     for rel in global_list_rels:
         df_query = df_subgraph.query(f'relation == "{rel}"')
         _htr_data['entity', rel, 'entity'].edge_index = torch.tensor([df_query['head_idx'].tolist(),
                                                                       df_query['tail_idx'].tolist()])
-    _htr_data.from_index = from_index
-    _htr_data.to_index = to_index
-    _htr_data.negative_indices = negative_indices
+    _htr_data.anchor_mask = torch.eye(subgraph_size)[anchor_idx]
+    _htr_data.pos_mask = torch.eye(subgraph_size)[pos_idx]
+    _htr_data.neg_mask = torch.eye(subgraph_size)[neg_idx]
     _htr_data.relation = relation
     return _htr_data
 
 
 class KGDataset(Dataset):
-    def __init__(self, root, data_dir, num_neg, test=False,
+    def __init__(self, root, num_neg, test=False,
                  transform=None, pre_transform=None, pre_filter=None):
         """
         root = Where the dataset should be stored. This folder is split
         into raw_dir (downloaded dataset) and processed_dir (processed data).
         """
-        self.subgraph_path = os.path.join(data_dir, 'subgraphs')
-        self.embedding_path = os.path.join(data_dir, 'embeddings')
-        self.data_path = os.path.join(data_dir, 'data.txt')
-        self.global_list_rels_path = os.path.join(data_dir, 'list_rels.txt')
-        self.global_list_ents_path = os.path.join(data_dir, 'list_ents.txt')
+        self.subgraph_path = os.path.join(root, 'subgraphs')
+        self.embedding_path = os.path.join(root, 'embeddings')
+        self.data_path = os.path.join(root, 'data.txt')
+        self.global_list_rels_path = os.path.join(root, 'list_rels.txt')
+        self.global_list_ents_path = os.path.join(root, 'list_ents.txt')
         self.global_list_rels = None
         self.global_list_ents = None
         self.test = test
         self.data = None
         self.num_neg = num_neg
+        self.incremental = 0
         super(KGDataset, self).__init__(root, transform, pre_transform, pre_filter)
 
     @property
@@ -128,10 +124,11 @@ class KGDataset(Dataset):
         pass
 
     def len(self):
-        return self.data.shape[0] * 2  # fwd and bwd
+        return self.data.shape[0] * self.num_neg * 2  # fwd and bwd
+        # return self.incremental
 
     def process(self):
-        self.data = load_data_raw(self.data_path).head(100)
+        self.data = load_data_raw(self.data_path).head(4)
         data_length = self.data.shape[0]
 
         with open(self.global_list_ents_path, 'r') as f:
@@ -144,9 +141,9 @@ class KGDataset(Dataset):
             head, tail = row['head'], row['tail']
             rel, inv_rel = row['relation'], row['inv_relation']
 
-            if os.path.exists(os.path.join(self.processed_dir, f'{i}.pt')) and \
-                    os.path.exists(os.path.join(self.processed_dir, f'{i + data_length}.pt')):
-                continue
+            # if os.path.exists(os.path.join(self.processed_dir, f'{i}.pt')) and \
+            #         os.path.exists(os.path.join(self.processed_dir, f'{i + data_length}.pt')):
+            #     continue
 
             # Load the forward/backward subgraph
             df_fwd_subgraph, fwd_list_ents = load_subgraph(os.path.join(self.subgraph_path, f'{i}.fwd.txt'))
@@ -159,34 +156,33 @@ class KGDataset(Dataset):
                                              indices=[self.global_list_ents.index(e) for e in bwd_list_ents])
 
             # Create hetero data from subgraph
-            fwd_negative_indices = negative_sampling(anchor_entity=fwd_list_ents.index(head),
-                                                     pos_entity=fwd_list_ents.index(tail),
-                                                     entities=[fwd_list_ents.index(e) for e in fwd_list_ents])
-            fwd_htr_data = create_htr_data_from_subgraph(df_subgraph=df_fwd_subgraph,
-                                                         global_list_rels=self.global_list_rels,
-                                                         embeddings=fwd_embeddings,
-                                                         relation=rel,
-                                                         from_index=fwd_list_ents.index(head),
-                                                         to_index=fwd_list_ents.index(tail),
-                                                         negative_indices=fwd_negative_indices)
+            fwd_negative_indices = sample_negative(anchor_entity=fwd_list_ents.index(head),
+                                                   pos_entity=fwd_list_ents.index(tail),
+                                                   entities=[fwd_list_ents.index(e) for e in fwd_list_ents])
+            for idx in fwd_negative_indices:
+                fwd_htr_data = create_htr_data_from_subgraph(df_subgraph=df_fwd_subgraph,
+                                                             global_list_rels=self.global_list_rels,
+                                                             embeddings=fwd_embeddings,
+                                                             relation=rel,
+                                                             anchor_idx=fwd_list_ents.index(head),
+                                                             pos_idx=fwd_list_ents.index(tail),
+                                                             neg_idx=idx)
+                torch.save(fwd_htr_data, os.path.join(self.processed_dir, f'{self.incremental}.pt'))
+                self.incremental += 1
 
-            bwd_negative_indices = negative_sampling(anchor_entity=bwd_list_ents.index(tail),
-                                                     pos_entity=fwd_list_ents.index(head),
-                                                     entities=[bwd_list_ents.index(e) for e in bwd_list_ents])
-            bwd_htr_data = create_htr_data_from_subgraph(df_subgraph=df_bwd_subgraph,
-                                                         global_list_rels=self.global_list_rels,
-                                                         embeddings=bwd_embeddings,
-                                                         relation=inv_rel,
-                                                         from_index=bwd_list_ents.index(tail),
-                                                         to_index=bwd_list_ents.index(head),
-                                                         negative_indices=bwd_negative_indices)
-
-            torch.save(fwd_htr_data,
-                       os.path.join(self.processed_dir,
-                                    f'{i}.pt'))
-            torch.save(bwd_htr_data,
-                       os.path.join(self.processed_dir,
-                                    f'{i + data_length}.pt'))
+            bwd_negative_indices = sample_negative(anchor_entity=bwd_list_ents.index(tail),
+                                                   pos_entity=fwd_list_ents.index(head),
+                                                   entities=[bwd_list_ents.index(e) for e in bwd_list_ents])
+            for idx in bwd_negative_indices:
+                bwd_htr_data = create_htr_data_from_subgraph(df_subgraph=df_bwd_subgraph,
+                                                             global_list_rels=self.global_list_rels,
+                                                             embeddings=bwd_embeddings,
+                                                             relation=inv_rel,
+                                                             anchor_idx=bwd_list_ents.index(tail),
+                                                             pos_idx=bwd_list_ents.index(head),
+                                                             neg_idx=idx)
+                torch.save(bwd_htr_data, os.path.join(self.processed_dir, f'{self.incremental}.pt'))
+                self.incremental += 1
 
     def get(self, idx):
         """ - Equivalent to __getitem__ in pytorch
