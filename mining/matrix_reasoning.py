@@ -177,7 +177,7 @@ if __name__ == '__main__':
     # mrr, values = answer_queries(df_train, rules_at_mat, entity_list)
     # print(mrr)
     print('--------------------------------------')
-    print(values)
+    # print(values)
     num_zeros = len([e for e in values if e == 0.0])
     print('Num 0s in values: ', num_zeros)
     print('Percentage 0s in values: ', num_zeros / len(mrr))
