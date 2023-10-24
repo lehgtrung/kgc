@@ -111,11 +111,11 @@ def hit_at(arr, at=10):
     return hit / len(arr)
 
 
-def answer_queries(df_test: pd.DataFrame, matrix_results: dict, entity_list: list):
+def answer_queries(df: pd.DataFrame, matrix_results: dict, entity_list: list):
     mrr = []
     values = []
     out_of_dist_count = 0
-    for i, row in df_test.iterrows():
+    for i, row in df.iterrows():
         if row['head'] not in entity_list or row['tail'] not in entity_list:
             out_of_dist_count += 1
             continue
@@ -166,8 +166,7 @@ if __name__ == '__main__':
     total_entities = set(df_total['head'].tolist() + df_total['tail'].tolist())
     print('test_entities is subset of total_entities: ', test_entities.issubset(total_entities))
     print('test_entities is subset of entity_list: ', test_entities.issubset(entity_list))
-
-    exit()
+    print('test_entities the same as entity_list: ', test_entities == set(entity_list))
 
     print('Finish embedding data as adj matrix')
     rules = encode_rules('../WN18RR/patterns_mxl_3.txt')
