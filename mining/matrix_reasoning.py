@@ -160,6 +160,15 @@ if __name__ == '__main__':
     df_test = load_data_raw('../WN18RR/test.txt')
     df_total = pd.concat([df_train, df_test], ignore_index=True)
     sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_total)
+
+
+    test_entities = set(df_test['head'].tolist() + df_test['tail'].tolist())
+    total_entities = set(df_total['head'].tolist() + df_total['tail'].tolist())
+    print('test_entities is subset of total_entities: ', test_entities.issubset(total_entities))
+    print('test_entities is subset of entity_list: ', test_entities.issubset(entity_list))
+
+    exit()
+
     print('Finish embedding data as adj matrix')
     rules = encode_rules('../WN18RR/patterns_mxl_3.txt')
 
@@ -167,7 +176,7 @@ if __name__ == '__main__':
     print('Finish encoding rules')
     mrr, values = answer_queries(df_test, rules_at_mat, entity_list)
     # mrr, values = answer_queries(df_train, rules_at_mat, entity_list)
-    print(mrr)
+    # print(mrr)
     print('--------------------------------------')
     print(values)
     num_zeros = len([e for e in values if e == 0.0])
