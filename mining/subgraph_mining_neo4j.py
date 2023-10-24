@@ -47,6 +47,10 @@ def extract_subgraphs(driver,
     for i, row in df.iterrows():
         if i < start_at or i >= end_at:
             continue
+        if os.path.exists(out_path.format(idx=f'{i}.fwd')) and \
+                os.path.exists(out_path.format(idx=f'{i}.fwd')):
+            continue
+
         if i % 100 == 0:
             print(f'At step: {i}, current time: {datetime.now().strftime("%Y-%m-%d %H:%M")}')
         head, relation, inv_relation, tail = row['head'], row['relation'], \

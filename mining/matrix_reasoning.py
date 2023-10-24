@@ -158,7 +158,8 @@ def check_if_tail_in_subgraph(path):
 if __name__ == '__main__':
     df_train = load_data_raw('../WN18RR/train.txt')
     df_test = load_data_raw('../WN18RR/test.txt')
-    sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_train)
+    df_total = pd.concat([df_train, df_test], ignore_index=True)
+    sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_total)
     print('Finish embedding data as adj matrix')
     rules = encode_rules('../WN18RR/patterns_mxl_3.txt')
 

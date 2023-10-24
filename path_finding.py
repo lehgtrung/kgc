@@ -1,7 +1,7 @@
 import argparse
 from py2neo import Graph
 import pandas as pd
-from main import load_data
+from data_importing import load_data
 from collections import Counter
 from tqdm import tqdm
 from neo4j import GraphDatabase
@@ -57,6 +57,7 @@ def count_relation(df:pd.DataFrame):
 
 
 if __name__ == '__main__':
+    # sudo systemctl start neo4j.service
     # Note: Neo4j is more than 10 times faster then Py2neo
     URI = "neo4j://localhost:7687"
     global_driver = GraphDatabase.driver(URI)
