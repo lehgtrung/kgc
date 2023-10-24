@@ -168,15 +168,8 @@ def show_results(mrr, values):
 if __name__ == '__main__':
     df_train = load_data_raw('../WN18RR/train.txt')
     df_test = load_data_raw('../WN18RR/test.txt')
-    # df_total = pd.concat([df_train, df_test], ignore_index=True)
-    sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_train)
-
-
-    # test_entities = set(df_test['head'].tolist() + df_test['tail'].tolist())
-    # total_entities = set(df_total['head'].tolist() + df_total['tail'].tolist())
-    # print('test_entities is subset of total_entities: ', test_entities.issubset(total_entities))
-    # print('test_entities is subset of entity_list: ', test_entities.issubset(entity_list))
-    # print('test_entities the same as entity_list: ', test_entities == set(entity_list))
+    df_total = pd.concat([df_train, df_test], ignore_index=True)
+    sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_test)
 
     print('Finish embedding data as adj matrix')
     rules = encode_rules('../WN18RR/patterns_mxl_3.txt')
