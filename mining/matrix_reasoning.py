@@ -155,6 +155,16 @@ def check_if_tail_in_subgraph(path):
     return 0
 
 
+def show_results(mrr, values):
+    num_zeros = len([e for e in values if e == 0.0])
+    print('Num 0s in values: ', num_zeros)
+    print('Percentage 0s in values: ', num_zeros / len(mrr))
+    print('MRR: ', mean_reciprocal_rank(mrr))
+    print('Hit@10: ', hit_at(mrr, 10))
+    print('Hit@3: ', hit_at(mrr, 3))
+    print('Hit@1: ', hit_at(mrr, 1))
+
+
 if __name__ == '__main__':
     df_train = load_data_raw('../WN18RR/train.txt')
     df_test = load_data_raw('../WN18RR/test.txt')
@@ -173,18 +183,13 @@ if __name__ == '__main__':
 
     rules_at_mat = rule_as_mat_mul(sparse_adj_mat, rules, len(entity_list))
     print('Finish encoding rules')
-    mrr, values = answer_queries(df_test, rules_at_mat, entity_list)
-    # mrr, values = answer_queries(df_train, rules_at_mat, entity_list)
-    # print(mrr)
-    print('--------------------------------------')
-    # print(values)
-    num_zeros = len([e for e in values if e == 0.0])
-    print('Num 0s in values: ', num_zeros)
-    print('Percentage 0s in values: ', num_zeros / len(mrr))
-    print('MRR: ', mean_reciprocal_rank(mrr))
-    print('Hit@10: ', hit_at(mrr, 10))
-    print('Hit@3: ', hit_at(mrr, 3))
-    print('Hit@1: ', hit_at(mrr, 1))
+    mrr_test, values_test = answer_queries(df_test, rules_at_mat, entity_list)
+    mrr_train, values_train = answer_queries(df_train, rules_at_mat, entity_list)
+    print('Train result')
+    show_results(mrr_train, values_train)
+    print('Test result')
+    show_results(mrr_test, values_test)
+
 
     # Test data
     # MRR: 0.2603472098878333
