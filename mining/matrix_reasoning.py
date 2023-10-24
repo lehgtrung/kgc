@@ -96,11 +96,15 @@ def get_rank_at(arr, idx):
     return ranks[idx], arr[idx]
 
 
+# def mean_reciprocal_rank(arr):
+#     mrr = 0
+#     for rank in arr:
+#         mrr += 1/rank
+#     return 1/len(arr) * mrr
+
+
 def mean_reciprocal_rank(arr):
-    mrr = 0
-    for rank in arr:
-        mrr += 1/rank
-    return 1/len(arr) * mrr
+    return sum(arr)
 
 
 def hit_at(arr, at=10):
