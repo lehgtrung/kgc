@@ -1,13 +1,16 @@
+import argparse
 
 import numpy as np
-import pandas as pd
 from tqdm import tqdm
-from scipy.sparse import csr_matrix
-from scipy.sparse.linalg import spsolve
 from reasoning_utils import *
 import torch
 import re
-import glob
+import random
+
+seed = 42
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
 
 # Check if CUDA (GPU) is available
 cuda_available = torch.cuda.is_available()
@@ -40,7 +43,6 @@ def encode_data_as_adj_mat(df:pd.DataFrame):
 
     for key in _adj_mat:
         _sparse_adj_mat[key] = torch.tensor(_adj_mat[key])
-        # sparse_adj_mat[key] = csr_matrix(adj_mat[key])
         _sparse_adj_mat[key] = _sparse_adj_mat[key].to_sparse()
     return _sparse_adj_mat, _entity_list, _relation_list
 
@@ -68,16 +70,18 @@ def encode_rules(rule_path, max_rank=10):
     return rules
 
 
-def rule_as_mat_mul(adj_mat, rules: dict, n):
+def rule_as_mat_mul(adj_mat, rules: dict, n, conf_mode='keep'):
     # rules: keys are relations, values are list of tuples
     # with elem 0 rep conf and the rest are relations
     matrix_results = {}
     for query_key in tqdm(rules, total=len(rules)):
-        print(query_key)
         sub_rules_output = torch.zeros((n, n))
         for rule in rules[query_key]:
-            print(rule)
             conf = rule['conf']
+            if conf_mode == 'fixed':
+                conf = 0.5
+            elif conf_mode == 'random':
+                conf = random.gauss(0.5, 0.1)
             body = rule['body']
             prod = adj_mat[body[0]]
             for rel in body[1:]:
@@ -166,15 +170,31 @@ def show_results(mrr, values):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--source", help="Which matrix is used (train/test/all)", required=True)
+    parser.add_argument("--conf_mode", help="Mode (keep/fixed/random)", required=True)
+    args = parser.parse_args()
+    source = args.source
+    conf_mode = args.conf_mode
+
     df_train = load_data_raw('../WN18RR/train.txt')
     df_test = load_data_raw('../WN18RR/test.txt')
-    df_total = pd.concat([df_train, df_test], ignore_index=True)
-    sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_test)
+    df_all = pd.concat([df_train, df_test], ignore_index=True)
 
-    print('Finish embedding data as adj matrix')
+    if source not in ['train', 'test', 'all']:
+        raise ValueError('Wrong source name!!!')
+
+    if source == 'train':
+        sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_train)
+    elif source == 'test':
+        sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_test)
+    else:
+        sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_all)
+
+    print(f'Finish embedding {source} data as adj matrix')
     rules = encode_rules('../WN18RR/patterns_mxl_3.txt')
 
-    rules_at_mat = rule_as_mat_mul(sparse_adj_mat, rules, len(entity_list))
+    rules_at_mat = rule_as_mat_mul(sparse_adj_mat, rules, len(entity_list), conf_mode)
     print('Finish encoding rules')
     mrr_test, values_test = answer_queries(df_test, rules_at_mat, entity_list)
     mrr_train, values_train = answer_queries(df_train, rules_at_mat, entity_list)
@@ -182,36 +202,6 @@ if __name__ == '__main__':
     show_results(mrr_train, values_train)
     print('Test result')
     show_results(mrr_test, values_test)
-
-
-    # Test data
-    # MRR: 0.2603472098878333
-    # Hit @ 10: 0.45194938440492477
-    # Hit @ 3: 0.3288303693570451
-    # Hit @ 1: 0.161593707250342
-
-    # Train data
-    # MRR: 0.7011913358847316
-    # Hit @ 10: 0.9123970749121898
-    # Hit @ 3: 0.798013473829677
-    # Hit @ 1: 0.5779812287672021
-
-    # total = 0
-    # total_pos = 0
-    # for part in range(6):
-    #     paths = glob.glob(f'WN18RR_train_2hops_neo4j/part={part}/*.txt')
-    #     for path in tqdm(paths):
-    #         total_pos += check_if_tail_in_subgraph(path)
-    #         total += 1
-    # print('Pct train: ', total_pos / total)
-
-    # total = 0
-    # total_pos = 0
-    # paths = glob.glob(f'WN18RR_test_3hops_neo4j/*.txt')
-    # for path in tqdm(paths):
-    #     total_pos += check_if_tail_in_subgraph(path)
-    #     total += 1
-    # print('Pct test: ', total_pos / total)
 
 
 

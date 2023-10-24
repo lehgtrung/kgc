@@ -41,8 +41,6 @@ def load_data(path):
 
 
 def import_records(driver, df, dataset_name):
-    df['head'] = df['head'].apply(lambda x: 'TEST_' + x)
-    df['tail'] = df['tail'].apply(lambda x: 'TEST_' + x)
     print('Import records ...')
     for i, row in tqdm(df.iterrows(), total=len(df)):
         head, relation, inv_relation, tail = row['head'], row['relation'], \
