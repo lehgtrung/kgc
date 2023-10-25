@@ -120,6 +120,8 @@ def answer_queries(df: pd.DataFrame, matrix_results: dict, entity_list: list):
     values = []
     out_of_dist_count = 0
     for i, row in df.iterrows():
+        if row['relation'] == 'r33':  # special case for FB15k-237
+            continue
         if row['head'] not in entity_list or row['tail'] not in entity_list:
             out_of_dist_count += 1
             continue
