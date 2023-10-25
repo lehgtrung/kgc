@@ -11,8 +11,8 @@ def load_fb15k_237(train_path, valid_path, test_path):
         return _data, _list_ents, _list_rels
 
     def _apply_ents(_data, _list_ents):
-        _data['head'] = _data['head'].apply(lambda x: 'e' + str(_list_ents.index(x)))
-        _data['tail'] = _data['tail'].apply(lambda x: 'e' + str(_list_ents.index(x)))
+        _data['head'] = _data['head'].apply(lambda x: str(_list_ents.index(x)))
+        _data['tail'] = _data['tail'].apply(lambda x: str(_list_ents.index(x)))
         return _data
 
     def _apply_rels(_data, _list_rels):
@@ -40,17 +40,17 @@ def load_fb15k_237(train_path, valid_path, test_path):
 
 
 if __name__ == '__main__':
-    df_train, df_valid, df_test, list_ents, list_rels = load_fb15k_237('FB15k-237/train.txt',
-                                                                       'FB15k-237/valid.txt',
-                                                                       'FB15k-237/test.txt')
+    df_train, df_valid, df_test, list_ents, list_rels = load_fb15k_237('FB15k_237/train.txt.bk',
+                                                                       'FB15k_237/valid.txt.bk',
+                                                                       'FB15k_237/test.txt.bk')
 
-    df_train.to_csv('FB15k-237/train_encoded.txt', header=False, sep='\t', index=False)
-    df_valid.to_csv('FB15k-237/valid_encoded.txt', header=False, sep='\t', index=False)
-    df_test.to_csv('FB15k-237/test_encoded.txt', header=False, sep='\t', index=False)
+    df_train.to_csv('FB15k_237/train.txt', header=False, sep='\t', index=False)
+    df_valid.to_csv('FB15k_237/valid.txt', header=False, sep='\t', index=False)
+    df_test.to_csv('FB15k_237/test.txt', header=False, sep='\t', index=False)
 
-    with open('FB15k-237/list_ents.txt', 'w') as f:
+    with open('FB15k_237/list_ents.txt', 'w') as f:
         f.writelines([e + '\n' for e in list_ents])
-    with open('FB15k-237/list_rels.txt', 'w') as f:
+    with open('FB15k_237/list_rels.txt', 'w') as f:
         f.writelines([e + '\n' for e in list_rels])
 
 

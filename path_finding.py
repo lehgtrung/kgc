@@ -66,7 +66,7 @@ if __name__ == '__main__':
     parser.add_argument("--dataset", help="Name of dataset", required=True)
     parser.add_argument("--max_len", help="Max length", required=True, type=int)
     args = parser.parse_args()
-    if args.dataset not in ['WN18RR', 'FB15k-237']:
+    if args.dataset not in ['WN18RR', 'FB15k_237']:
         raise ValueError('Wrong dataset name!!!')
     dataset = args.dataset
     train_data = load_data(f'{dataset}/train.txt')

@@ -171,14 +171,18 @@ def show_results(mrr, values):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", help="Name of dataset", required=True)
     parser.add_argument("--source", help="Which matrix is used (train/test/all)", required=True)
     parser.add_argument("--conf_mode", help="Mode (keep/fixed/random)", required=True)
+    parser.add_argument("--max_len", help="Rule max length", required=True, type=int)
     args = parser.parse_args()
+    dataset = args.dataset
     source = args.source
     conf_mode = args.conf_mode
+    max_len = args.max_len
 
-    df_train = load_data_raw('../WN18RR/train.txt')
-    df_test = load_data_raw('../WN18RR/test.txt')
+    df_train = load_data_raw(f'../{dataset}/train.txt')
+    df_test = load_data_raw(f'../{dataset}/test.txt')
     df_all = pd.concat([df_train, df_test], ignore_index=True)
 
     if source not in ['train', 'test', 'all']:
@@ -192,7 +196,7 @@ if __name__ == '__main__':
         sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_all)
 
     print(f'Finish embedding {source} data as adj matrix')
-    rules = encode_rules('../WN18RR/patterns_mxl_3.txt')
+    rules = encode_rules(f'../{dataset}/patterns_mxl_{max_len}.txt')
 
     rules_at_mat = rule_as_mat_mul(sparse_adj_mat, rules, len(entity_list), conf_mode)
     print('Finish encoding rules')
