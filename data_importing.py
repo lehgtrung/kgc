@@ -86,17 +86,14 @@ if __name__ == '__main__':
     parser.add_argument("--dataset", help="Name of dataset", required=True)
     args = parser.parse_args()
 
-    if args.dataset not in ['WN18RR', 'FB15k-237']:
+    if args.dataset not in ['WN18RR', 'FB15k_237']:
         raise ValueError('Wrong dataset name!!!')
     dataset = args.dataset
 
-    train_data = load_data(f'WN18RR/train.txt')
+    train_data = load_data(f'{dataset}/train.txt')
     import_records(global_driver, train_data, dataset)
     global_driver.close()
 
-    # split_list_into_n_sublists(f'{dataset}/train.txt',
-    #                            dataset + '/splits/part_{i}.txt',
-    #                            6)
 
 
 

@@ -48,7 +48,7 @@ def extract_subgraphs(driver,
         if i < start_at or i >= end_at:
             continue
         if os.path.exists(out_path.format(idx=f'{i}.fwd')) and \
-                os.path.exists(out_path.format(idx=f'{i}.fwd')):
+                os.path.exists(out_path.format(idx=f'{i}.bwd')):
             continue
 
         if i % 100 == 0:
