@@ -19,7 +19,7 @@ if __name__ == '__main__':
     path = '../WN18RR/train.txt'
     remain_path = '../WN18RR/train_sampled.txt'
     sample_path = '../WN18RR/test_sampled.txt'
-    remain, sample = sample_dataset(path)
+    remain, sample = sample_dataset(path, args.k)
     remain.to_csv(remain_path, sep='\t', index=False, header=False)
     sample.to_csv(sample_path, sep='\t', index=False, header=False)
 
