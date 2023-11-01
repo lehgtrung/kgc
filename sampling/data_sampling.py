@@ -1,3 +1,4 @@
+import argparse
 
 import pandas as pd
 
@@ -11,6 +12,10 @@ def sample_dataset(path, k=3000):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--k", help="Number of samples", required=True)
+    args = parser.parse_args()
+
     path = '../WN18RR/train.txt'
     remain_path = '../WN18RR/train_sampled.txt'
     sample_path = '../WN18RR/test_sampled.txt'
