@@ -175,8 +175,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", help="Name of dataset", required=True)
     parser.add_argument("--source", help="Which matrix is used (train/test/all)", required=True)
-    parser.add_argument("--conf_mode", help="Mode (keep/fixed/random)", required=True)
-    parser.add_argument("--max_len", help="Rule max length", required=True, type=int)
+    parser.add_argument("--conf_mode", help="Mode (keep/fixed/random)", required=False, default='keep')
+    parser.add_argument("--max_len", help="Rule max length", required=False, type=int, default=3)
     parser.add_argument("--use_sample", help="Use sample or not", action='store_true')
     args = parser.parse_args()
     dataset = args.dataset
