@@ -1,10 +1,9 @@
 
 import pandas as pd
-from data_importing import load_data
 
 
 def sample_dataset(path, k=3000):
-    df = load_data(path)
+    df = pd.read_csv(path, sep='\t', dtype=str, header=None)
     selected_rows = df.sample(n=k)
     sample = pd.DataFrame(selected_rows)
     df = df.drop(selected_rows.index)
