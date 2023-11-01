@@ -13,7 +13,7 @@ def sample_dataset(path, k=3000):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--k", help="Number of samples", required=True)
+    parser.add_argument("--k", help="Number of samples", required=True, type=int)
     args = parser.parse_args()
 
     path = '../WN18RR/train.txt'
