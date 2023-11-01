@@ -177,14 +177,20 @@ if __name__ == '__main__':
     parser.add_argument("--source", help="Which matrix is used (train/test/all)", required=True)
     parser.add_argument("--conf_mode", help="Mode (keep/fixed/random)", required=True)
     parser.add_argument("--max_len", help="Rule max length", required=True, type=int)
+    parser.add_argument("--use_sample", help="Use sample or not", action='store_true')
     args = parser.parse_args()
     dataset = args.dataset
     source = args.source
     conf_mode = args.conf_mode
     max_len = args.max_len
+    use_sample = args.use_sample
 
-    df_train = load_data_raw(f'../{dataset}/train.txt')
-    df_test = load_data_raw(f'../{dataset}/test.txt')
+    if use_sample:
+        df_train = load_data_raw(f'../{dataset}/train_sampled.txt')
+        df_test = load_data_raw(f'../{dataset}/test_sampled.txt')
+    else:
+        df_train = load_data_raw(f'../{dataset}/train.txt')
+        df_test = load_data_raw(f'../{dataset}/test.txt')
     df_all = pd.concat([df_train, df_test], ignore_index=True)
 
     if source not in ['train', 'test', 'all']:
