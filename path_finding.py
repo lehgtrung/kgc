@@ -28,9 +28,11 @@ def query_path(driver, relation, from_entity, to_entity, dataset_name, max_len):
     return list(results)
 
 
-def extract_paths(driver, df:pd.DataFrame, dataset_name, max_len):
+def extract_paths(driver, df:pd.DataFrame, dataset_name, max_len, start_at, end_at):
     patterns = []
     for i, row in tqdm(df.iterrows(), total=len(df)):
+        if i < start_at or i >= end_at:
+            continue
         # head -> tail direction
         head, relation, inv_relation, tail = row['head'], row['relation'], row['inv_relation'], row['tail']
         head2tail_paths = query_path(driver=driver,
@@ -65,16 +67,34 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", help="Name of dataset", required=True)
     parser.add_argument("--max_len", help="Max length", required=True, type=int)
+    parser.add_argument("--start_at", help="From index", required=False, type=int, default=0)
+    parser.add_argument("--end_at", help="To index", required=False, type=int, default=-1)
     args = parser.parse_args()
     if args.dataset not in ['WN18RR', 'FB15k_237']:
         raise ValueError('Wrong dataset name!!!')
     dataset = args.dataset
-    train_data = load_data(f'{dataset}/train.txt')
+    start_at = args.start_at
+    end_at = args.end_at
+
+    if dataset == 'FB15k_237':
+        train_data = load_data(f'{dataset}/train_50k.txt')
+    else:
+        train_data = load_data(f'{dataset}/train.txt')
+
+    if end_at < 0:
+        train_data = train_data.iloc[start_at:]
+    else:
+        train_data = train_data.iloc[start_at:end_at]
+
     relation_count = count_relation(train_data)
 
-    patterns = extract_paths(global_driver, train_data, dataset, args.max_len)
+    # Sample FB15k-237
+    # sample = pd.read_csv(f'{dataset}/train.txt', sep='\t', dtype=str, header=None).sample(n=50000)
+    # sample.to_csv(f'{dataset}/train_50k.txt', sep='\t', header=False, index=False)
 
-    with open(f'{dataset}/patterns_mxl_{args.max_len}.txt', 'w') as f:
+    patterns = extract_paths(global_driver, train_data, dataset, args.max_len, start_at, end_at)
+
+    with open(f'{dataset}/patterns_mxl_{args.max_len}_from_{start_at}_to_{end_at}.txt', 'w') as f:
         for i, pat in enumerate(patterns):
             f.write(f'{pat[0]} {pat[1]} {round(pat[1] / relation_count[pat[0].split()[0]], 3)}\n')
 
