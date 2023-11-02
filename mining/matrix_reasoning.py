@@ -47,7 +47,7 @@ def encode_data_as_adj_mat(df:pd.DataFrame):
     return _sparse_adj_mat, _entity_list, _relation_list
 
 
-def encode_rules(rule_path, max_rank=100):
+def encode_rules(rule_path, max_rank):
     with open(rule_path, 'r') as f:
         raw_rule_list = [e.strip() for e in f.readlines()]
     rules = {}
@@ -178,12 +178,14 @@ if __name__ == '__main__':
     parser.add_argument("--conf_mode", help="Mode (keep/fixed/random)", required=False, default='keep')
     parser.add_argument("--max_len", help="Rule max length", required=False, type=int, default=3)
     parser.add_argument("--use_sample", help="Use sample or not", action='store_true')
+    parser.add_argument("--max_rank", help="Max number of rules used", required=False, type=int, default=10)
     args = parser.parse_args()
     dataset = args.dataset
     source = args.source
     conf_mode = args.conf_mode
     max_len = args.max_len
     use_sample = args.use_sample
+    max_rank = args.max_rank
 
     if use_sample:
         df_train = load_data_raw(f'../{dataset}/train_sampled.txt')
@@ -206,7 +208,7 @@ if __name__ == '__main__':
         sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_all)
 
     print(f'Finish embedding {source} data as adj matrix')
-    rules = encode_rules(f'../{dataset}/patterns_mxl_{max_len}.txt')
+    rules = encode_rules(f'../{dataset}/patterns_mxl_{max_len}.txt', max_rank)
 
     rules_at_mat = rule_as_mat_mul(sparse_adj_mat, rules, len(entity_list), conf_mode)
     print('Finish encoding rules')
