@@ -28,11 +28,12 @@ if __name__ == '__main__':
     parser.add_argument('paths', nargs='*', help='Variable-length input arguments')
     args = parser.parse_args()
 
-    train_data = load_data(f'FB15k_237/train_50k.txt')
+    train_data = load_data(f'FB15k_237/train.txt')
+    train_data = train_data.head(150000)
     relation_count = count_relation(train_data)
 
     rules_counter = merge_dicts(*args.paths)
-    with open(f'FB15k_237/patterns_mxl_3.txt', 'w') as f:
+    with open(f'FB15k_237/patterns_mxl_3_top_150k.txt', 'w') as f:
         for i, rule in enumerate(rules_counter):
             f.write(f"{' '.join(rule)} {rules_counter[rule]} {round(rules_counter[rule] / relation_count[rule[0]], 3)}\n")
 

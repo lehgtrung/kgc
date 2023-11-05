@@ -120,7 +120,7 @@ def answer_queries(df: pd.DataFrame, matrix_results: dict, entity_list: list):
     values = []
     out_of_dist_count = 0
     for i, row in df.iterrows():
-        if row['relation'] == 'r33':  # special case for FB15k-237
+        if row['relation'] in ['r33', 'inv_r195']:  # special case for FB15k-237
             continue
         if row['head'] not in entity_list or row['tail'] not in entity_list:
             out_of_dist_count += 1
@@ -190,12 +190,13 @@ if __name__ == '__main__':
     if use_sample:
         df_train = load_data_raw(f'../{dataset}/train_sampled.txt')
         df_test = load_data_raw(f'../{dataset}/test_sampled.txt')
-        df_valid = load_data_raw(f'../{dataset}/valid_sampled.txt')
+        #df_valid = load_data_raw(f'../{dataset}/valid_sampled.txt')
     else:
         df_train = load_data_raw(f'../{dataset}/train.txt')
         df_test = load_data_raw(f'../{dataset}/test.txt')
-        df_valid = load_data_raw(f'../{dataset}/valid.txt')
-    df_all = pd.concat([df_train, df_test, df_valid], ignore_index=True)
+        #df_valid = load_data_raw(f'../{dataset}/valid.txt')
+    # df_all = pd.concat([df_train, df_test, df_valid], ignore_index=True)
+    df_all = pd.concat([df_train, df_test], ignore_index=True)
 
     if source not in ['train', 'test', 'all']:
         raise ValueError('Wrong source name!!!')

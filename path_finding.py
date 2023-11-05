@@ -69,17 +69,22 @@ if __name__ == '__main__':
     parser.add_argument("--max_len", help="Max length", required=True, type=int)
     parser.add_argument("--start_at", help="From index", required=False, type=int, default=0)
     parser.add_argument("--end_at", help="To index", required=False, type=int, default=-1)
+    parser.add_argument("--use_sample", help="Use sample or not", action='store_true')
     args = parser.parse_args()
     if args.dataset not in ['WN18RR', 'FB15k_237']:
         raise ValueError('Wrong dataset name!!!')
     dataset = args.dataset
     start_at = args.start_at
     end_at = args.end_at
+    use_sample = args.use_sample
 
-    if dataset == 'FB15k_237':
+    if dataset == 'FB15k_237' and use_sample:
         train_data = load_data(f'{dataset}/train_50k.txt')
     else:
         train_data = load_data(f'{dataset}/train.txt')
+
+    if end_at > len(train_data):
+        end_at = len(train_data)
 
     if end_at < 0:
         train_data = train_data.iloc[start_at:]
