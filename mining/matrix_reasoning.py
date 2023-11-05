@@ -29,7 +29,8 @@ def encode_data_as_adj_mat(df:pd.DataFrame, _relation_list):
     num_entities = len(_entity_list)
 
     for rel in _relation_list:
-        _adj_mat[rel] = np.zeros((num_entities, num_entities))
+        # _adj_mat[rel] = np.zeros((num_entities, num_entities))
+        _adj_mat[rel] = torch.zeros((num_entities, num_entities), dtype=torch.float32)
 
     for i, row in tqdm(df.iterrows(), total=len(df)):
         head_idx = _entity_list.index(row['head'])
@@ -42,8 +43,9 @@ def encode_data_as_adj_mat(df:pd.DataFrame, _relation_list):
         _adj_mat[inv_relation][tail_idx][head_idx] = 1.0
 
     for key in _adj_mat:
-        _sparse_adj_mat[key] = torch.tensor(_adj_mat[key])
-        _sparse_adj_mat[key] = _sparse_adj_mat[key].to_sparse()
+        # _sparse_adj_mat[key] = torch.tensor(_adj_mat[key])
+        # _sparse_adj_mat[key] = _sparse_adj_mat[key].to_sparse()
+        _sparse_adj_mat[key] = _adj_mat[key].to_sparse()
     return _sparse_adj_mat, _entity_list, _relation_list
 
 
