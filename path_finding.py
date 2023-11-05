@@ -99,7 +99,12 @@ if __name__ == '__main__':
 
     patterns = extract_paths(global_driver, train_data, dataset, args.max_len, start_at, end_at)
 
-    with open(f'{dataset}/patterns_mxl_{args.max_len}_from_{start_at}_to_{end_at}.txt', 'w') as f:
+    if use_sample:
+        file_name = f'{dataset}/patterns_mxl_{args.max_len}_from_{start_at}_to_{end_at}_sample_50k.txt'
+    else:
+        file_name = f'{dataset}/patterns_mxl_{args.max_len}_from_{start_at}_to_{end_at}.txt'
+
+    with open(file_name, 'w') as f:
         for i, pat in enumerate(patterns):
             f.write(f'{pat[0]} {pat[1]} {round(pat[1] / relation_count[pat[0].split()[0]], 3)}\n')
 
