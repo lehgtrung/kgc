@@ -21,11 +21,11 @@ else:
     print("CUDA (GPU) is not available.")
 
 
-def encode_data_as_adj_mat(df:pd.DataFrame):
+def encode_data_as_adj_mat(df:pd.DataFrame, _relation_list):
     _adj_mat = {}
     _sparse_adj_mat = {}
     _entity_list = list(set(df['head'].to_list() + df['tail'].to_list()))
-    _relation_list = list(set(df['relation'].to_list() + df['inv_relation'].to_list()))
+    # _relation_list = list(set(df['relation'].to_list() + df['inv_relation'].to_list()))
     num_entities = len(_entity_list)
 
     for rel in _relation_list:
@@ -120,7 +120,7 @@ def answer_queries(df: pd.DataFrame, matrix_results: dict, entity_list: list):
     values = []
     out_of_dist_count = 0
     for i, row in df.iterrows():
-        if row['relation'] in ['r33', 'inv_r195']:  # special case for FB15k-237
+        if row['relation'] in ['r33']:  # special case for FB15k-237
             continue
         if row['head'] not in entity_list or row['tail'] not in entity_list:
             out_of_dist_count += 1
@@ -190,23 +190,21 @@ if __name__ == '__main__':
     if use_sample:
         df_train = load_data_raw(f'../{dataset}/train_sampled.txt')
         df_test = load_data_raw(f'../{dataset}/test_sampled.txt')
-        #df_valid = load_data_raw(f'../{dataset}/valid_sampled.txt')
     else:
         df_train = load_data_raw(f'../{dataset}/train.txt')
         df_test = load_data_raw(f'../{dataset}/test.txt')
-        #df_valid = load_data_raw(f'../{dataset}/valid.txt')
-    # df_all = pd.concat([df_train, df_test, df_valid], ignore_index=True)
     df_all = pd.concat([df_train, df_test], ignore_index=True)
+    list_rels = list(set(df_all['relation'].to_list() + df_all['inv_relation'].to_list()))
 
     if source not in ['train', 'test', 'all']:
         raise ValueError('Wrong source name!!!')
 
     if source == 'train':
-        sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_train)
+        sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_train, list_rels)
     elif source == 'test':
-        sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_test)
+        sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_test, list_rels)
     else:
-        sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_all)
+        sparse_adj_mat, entity_list, relation_list = encode_data_as_adj_mat(df_all, list_rels)
 
     print(f'Finish embedding {source} data as adj matrix')
     rules = encode_rules(f'../{dataset}/patterns_mxl_{max_len}.txt', max_rank)
