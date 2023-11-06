@@ -45,7 +45,7 @@ def encode_data_as_adj_mat(df:pd.DataFrame, _relation_list):
     for key in _adj_mat:
         # _sparse_adj_mat[key] = torch.tensor(_adj_mat[key])
         # _sparse_adj_mat[key] = _sparse_adj_mat[key].to_sparse()
-        _sparse_adj_mat[key] = _adj_mat[key].to_sparse().to('cuda:0')
+        _sparse_adj_mat[key] = _adj_mat[key].to_sparse()
     return _sparse_adj_mat, _entity_list, _relation_list
 
 
@@ -77,7 +77,7 @@ def rule_as_mat_mul(adj_mat, rules: dict, n, conf_mode='keep'):
     # with elem 0 rep conf and the rest are relations
     matrix_results = {}
     for query_key in tqdm(rules, total=len(rules)):
-        sub_rules_output = torch.zeros((n, n)).to('cuda:0')
+        sub_rules_output = torch.zeros((n, n))
         for rule in rules[query_key]:
             conf = rule['conf']
             if conf_mode == 'fixed':
