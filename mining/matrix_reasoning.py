@@ -45,7 +45,7 @@ def encode_data_as_adj_mat(df:pd.DataFrame, _relation_list):
     for key in _adj_mat:
         # _sparse_adj_mat[key] = torch.tensor(_adj_mat[key])
         # _sparse_adj_mat[key] = _sparse_adj_mat[key].to_sparse()
-        _sparse_adj_mat[key] = _adj_mat[key].to_sparse()
+        _sparse_adj_mat[key] = _adj_mat[key].to_sparse().to('cuda:0')
     return _sparse_adj_mat, _entity_list, _relation_list
 
 
