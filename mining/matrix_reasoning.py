@@ -77,7 +77,7 @@ def rule_as_mat_mul(adj_mat, rules: dict, n, conf_mode='keep'):
     # with elem 0 rep conf and the rest are relations
     matrix_results = {}
     for query_key in tqdm(rules, total=len(rules)):
-        sub_rules_output = torch.zeros((n, n))
+        sub_rules_output = torch.zeros((n, n)).to('cuda:0')
         for rule in rules[query_key]:
             conf = rule['conf']
             if conf_mode == 'fixed':
