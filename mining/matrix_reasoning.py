@@ -117,8 +117,10 @@ def answer_queries(df: pd.DataFrame, matrix_results: dict, entity_list: list):
     mrr = []
     values = []
     out_of_dist_count = 0
+    r33_count = 0
     for i, row in df.iterrows():
         if row['relation'] in ['r33']:  # special case for FB15k-237
+            r33_count += 1
             continue
         if row['head'] not in entity_list or row['tail'] not in entity_list:
             out_of_dist_count += 1
@@ -139,6 +141,7 @@ def answer_queries(df: pd.DataFrame, matrix_results: dict, entity_list: list):
         values.append(forward_value)
         values.append(backward_value)
     print('Number of ood = ', out_of_dist_count)
+    print('Number of r33 = ', r33_count)
     return mrr, values
 
 
