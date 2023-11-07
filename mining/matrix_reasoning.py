@@ -49,14 +49,12 @@ def encode_rules(rule_path, max_rank):
     with open(rule_path, 'r') as f:
         raw_rule_list = [e.strip().split() for e in f.readlines()]
     raw_rule_list = sorted(raw_rule_list, key=lambda x: (x[0], -float(x[-1])))
-    for x in raw_rule_list[:100]:
-        print(x)
-    exit()
     rules = {}
     for line in raw_rule_list:
         # line = line.split()
         rule_head = normalize_relation(line[0])
-        rule_conf = float(line[-1])
+        # rule_conf = float(line[-1])
+        rule_conf = int(line[-2])
         rule_body = [normalize_relation(e) for e in line[1:-2]]
         if rule_head not in rules:
             rules[rule_head] = []
