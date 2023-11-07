@@ -33,8 +33,16 @@ if __name__ == '__main__':
     relation_count = count_relation(train_data)
 
     rules_counter = merge_dicts(*args.paths)
+    rules = []
+    for i, rule in enumerate(rules_counter):
+        _rule = list(rule)
+        _rule.append(str(rules_counter[rule]))
+        _rule.append(str(round(rules_counter[rule] / relation_count[rule[0]], 3)))
+        rules.append(_rule)
+    rules = sorted(rules, key=lambda x: (x[0], -int(x[-2])))
+
     with open(f'FB15k_237/patterns_mxl_3_top_150k.txt', 'w') as f:
-        for i, rule in enumerate(rules_counter):
-            f.write(f"{' '.join(rule)} {rules_counter[rule]} {round(rules_counter[rule] / relation_count[rule[0]], 3)}\n")
+        for rule in rules:
+            f.write(f"{' '.join(rule)}\n")
 
 
