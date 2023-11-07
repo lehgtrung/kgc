@@ -196,8 +196,9 @@ if __name__ == '__main__':
     else:
         df_train = load_data_raw(f'../{dataset}/train.txt')
         df_test = load_data_raw(f'../{dataset}/test.txt')
-        df_valid = load_data_raw(f'../{dataset}/valid.txt')
-    df_all = pd.concat([df_train, df_valid, df_test], ignore_index=True)
+        # df_valid = load_data_raw(f'../{dataset}/valid.txt')
+    # df_all = pd.concat([df_train, df_valid, df_test], ignore_index=True)
+    df_all = pd.concat([df_train, df_test], ignore_index=True)
     list_rels = list(set(df_all['relation'].to_list() + df_all['inv_relation'].to_list()))
 
     if source not in ['train', 'test', 'all']:
