@@ -48,7 +48,7 @@ def encode_data_as_adj_mat(df:pd.DataFrame, _relation_list):
 def encode_rules(rule_path, max_rank):
     with open(rule_path, 'r') as f:
         raw_rule_list = [e.strip().split() for e in f.readlines()]
-    raw_rule_list = sorted(raw_rule_list, key=lambda x: (x[0], -float(x[-1])))
+    raw_rule_list = sorted(raw_rule_list, key=lambda x: (x[0], -int(x[-2])))
     rules = {}
     for line in raw_rule_list:
         # line = line.split()
