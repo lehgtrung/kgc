@@ -200,6 +200,10 @@ if __name__ == '__main__':
     list_ents = list(set(df_all['head'].to_list() + df_all['tail'].to_list()))
     list_rels = list(set(df_all['relation'].to_list() + df_all['inv_relation'].to_list()))
     print(f'Testing on {dataset}...')
+    print(f'Source {source}...')
+    print(f'Confidence mode {conf_mode}...')
+    print(f'Maximum rule length {max_len}...')
+    print(f'Maximum number of rules {max_rank}...')
     print(f'There are {len(list_ents)} entities in total!')
 
     if source not in ['train', 'test', 'all']:
