@@ -28,7 +28,7 @@ def encode_data_as_adj_mat(df:pd.DataFrame, _relation_list):
     num_entities = len(_entity_list)
 
     for rel in _relation_list:
-        _adj_mat[rel] = torch.zeros((num_entities, num_entities), dtype=torch.float32)
+        _adj_mat[rel] = torch.zeros((num_entities, num_entities), dtype=torch.float32).to_sparse()
 
     for i, row in tqdm(df.iterrows(), total=len(df)):
         head_idx = _entity_list.index(row['head'])
@@ -41,7 +41,8 @@ def encode_data_as_adj_mat(df:pd.DataFrame, _relation_list):
         _adj_mat[inv_relation][tail_idx][head_idx] = 1.0
 
     for key in _adj_mat:
-        _sparse_adj_mat[key] = _adj_mat[key].to_sparse()
+        # _sparse_adj_mat[key] = _adj_mat[key].to_sparse()
+        _sparse_adj_mat[key] = _adj_mat[key]
     return _sparse_adj_mat, _entity_list, _relation_list
 
 
@@ -195,9 +196,8 @@ if __name__ == '__main__':
     else:
         df_train = load_data_raw(f'../{dataset}/train.txt')
         df_test = load_data_raw(f'../{dataset}/test.txt')
-        #df_valid = load_data_raw(f'../{dataset}/valid.txt')
-    #df_all = pd.concat([df_train, df_valid, df_test], ignore_index=True)
-    df_all = pd.concat([df_train, df_test], ignore_index=True)
+        df_valid = load_data_raw(f'../{dataset}/valid.txt')
+    df_all = pd.concat([df_train, df_valid, df_test], ignore_index=True)
     list_ents = list(set(df_all['head'].to_list() + df_all['tail'].to_list()))
     list_rels = list(set(df_all['relation'].to_list() + df_all['inv_relation'].to_list()))
     print(f'Testing on {dataset}...')
@@ -206,6 +206,7 @@ if __name__ == '__main__':
     print(f'Maximum rule length {max_len}...')
     print(f'Maximum number of rules {max_rank}...')
     print(f'There are {len(list_ents)} entities in total!')
+    print(f'There are {len(list_rels)} relations in total!')
 
     if source not in ['train', 'test', 'all']:
         raise ValueError('Wrong source name!!!')
