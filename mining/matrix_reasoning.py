@@ -48,7 +48,6 @@ def encode_data_as_adj_mat(df:pd.DataFrame, _relation_list):
 def encode_rules(rule_path, max_rank):
     with open(rule_path, 'r') as f:
         raw_rule_list = [e.strip().split() for e in f.readlines()]
-    # raw_rule_list = sorted(raw_rule_list, key=lambda x: (x[0], -int(x[-2])))
     rules = {}
     for line in raw_rule_list:
         # line = line.split()
@@ -91,7 +90,7 @@ def rule_as_mat_mul(adj_mat, rules: dict, n, conf_mode='keep'):
 
 
 def get_rank_at(arr, idx):
-    sorted_indices = np.argsort(arr, kind='mergesort')[::-1]
+    sorted_indices = np.argsort(arr, kind='stable')[::-1]
     # Create an array of ranks based on the sorted indices
     ranks = np.empty(len(arr), int)
     ranks[sorted_indices] = np.arange(len(arr)) + 1  # Adding 1 to start ranks from 1
