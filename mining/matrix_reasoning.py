@@ -95,7 +95,7 @@ def get_rank_at(arr, idx):
     # Create an array of ranks based on the sorted indices
     ranks = np.empty(len(arr), int)
     ranks[sorted_indices] = np.arange(len(arr)) + 1  # Adding 1 to start ranks from 1
-    return ranks[idx]
+    return ranks[idx], arr[idx]
 
 
 def mean_rank(arr):
@@ -134,15 +134,15 @@ def answer_queries(df: pd.DataFrame, matrix_results: dict, entity_list: list):
         forward_result = matrix_results[relation][head_idx]
         backward_result = matrix_results[inv_relation][tail_idx]
 
-        forward_rank = get_rank_at(forward_result, tail_idx)
-        # forward_rank, forward_value = get_rank_at(forward_result, tail_idx)
-        backward_rank = get_rank_at(backward_result, head_idx)
-        # backward_rank, backward_value = get_rank_at(backward_result, head_idx)
+        # forward_rank = get_rank_at(forward_result, tail_idx)
+        forward_rank, forward_value = get_rank_at(forward_result, tail_idx)
+        # backward_rank = get_rank_at(backward_result, head_idx)
+        backward_rank, backward_value = get_rank_at(backward_result, head_idx)
 
         mrr.append(forward_rank)
         mrr.append(backward_rank)
-        # values.append(forward_value)
-        # values.append(backward_value)
+        values.append(forward_value)
+        values.append(backward_value)
     return mrr, values
 
 
@@ -164,9 +164,9 @@ def check_if_tail_in_subgraph(path):
 
 
 def show_results(mrr, values):
-    # num_zeros = len([e for e in values if e == 0.0])
-    # print('Num 0s in values: ', num_zeros)
-    # print('Percentage 0s in values: ', num_zeros / len(mrr))
+    num_zeros = len([e for e in values if e == 0.0])
+    print('Num 0s in values: ', num_zeros)
+    print('Percentage 0s in values: ', num_zeros / len(mrr))
     print('MR: ', mean_rank(mrr))
     print('MRR: ', mean_reciprocal_rank(mrr))
     print('Hit@10: ', hit_at(mrr, 10))
