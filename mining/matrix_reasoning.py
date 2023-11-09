@@ -98,7 +98,7 @@ def rule_as_mat_mul(adj_mat, rules: dict, n, conf_mode='keep'):
 
 
 def get_rank_at(arr, idx):
-    return rankdata(arr, method='ordinal')[idx], arr[idx]
+    return rankdata([-e for e in arr], method='ordinal')[idx], arr[idx]
 
 
 def mean_rank(arr):
