@@ -1,3 +1,6 @@
+import shutup
+shutup.please()
+
 import argparse
 
 import numpy as np
@@ -6,6 +9,7 @@ from reasoning_utils import *
 import torch
 import re
 import random
+
 
 seed = 42
 random.seed(seed)
@@ -23,7 +27,6 @@ else:
 
 def encode_data_as_adj_mat(df:pd.DataFrame, _relation_list):
     _adj_mat = {}
-    _sparse_adj_mat = {}
     _entity_list = list(set(df['head'].to_list() + df['tail'].to_list()))
     num_entities = len(_entity_list)
 
@@ -41,8 +44,8 @@ def encode_data_as_adj_mat(df:pd.DataFrame, _relation_list):
         _adj_mat[inv_relation][tail_idx][head_idx] = 1.0
 
     for key in _adj_mat:
-        _sparse_adj_mat[key] = _adj_mat[key].to_sparse()
-    return _sparse_adj_mat, _entity_list, _relation_list
+        _adj_mat[key] = _adj_mat[key].to_sparse()
+    return _adj_mat, _entity_list, _relation_list
 
 
 def encode_rules(rule_path, max_rank):
