@@ -98,17 +98,18 @@ def get_rank_at(arr, idx):
 
 
 def mean_rank(arr):
-    mr = 0
-    for rank in arr:
-        mr += rank
-    return 1/len(arr) * mr
+    return np.mean(arr)
+
+
+#def mean_reciprocal_rank(arr):
+#     mrr = 0
+#     for rank in arr:
+#         mrr += 1.0/rank
+#     return 1.0/len(arr) * mrr
 
 
 def mean_reciprocal_rank(arr):
-    mrr = 0
-    for rank in arr:
-        mrr += 1/rank
-    return 1/len(arr) * mrr
+    return np.mean([1.0/e for e in arr])
 
 
 def hit_at(arr, at=10):
