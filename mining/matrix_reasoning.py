@@ -178,6 +178,7 @@ def show_results(mrr, values):
 
 
 if __name__ == '__main__':
+    print('============================================')
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", help="Name of dataset", required=True)
     parser.add_argument("--source", help="Which matrix is used (train/test/all)", required=True)
@@ -233,6 +234,7 @@ if __name__ == '__main__':
     show_results(mrr_train, values_train)
     print('Test result')
     show_results(mrr_test, values_test)
+    print('============================================')
 
 
 

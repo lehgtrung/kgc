@@ -29,7 +29,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     train_data = load_data(f'FB15k_237/train.txt')
-    train_data = train_data.head(150000)
+    # train_data = train_data.head(150000)
     relation_count = count_relation(train_data)
 
     rules_counter = merge_dicts(*args.paths)
@@ -41,7 +41,7 @@ if __name__ == '__main__':
         rules.append(_rule)
     rules = sorted(rules, key=lambda x: (x[0], -int(x[-2])))
 
-    with open(f'FB15k_237/patterns_mxl_3_top_150k.txt', 'w') as f:
+    with open(f'FB15k_237/patterns_mxl_3.txt', 'w') as f:
         for rule in rules:
             f.write(f"{' '.join(rule)}\n")
 
