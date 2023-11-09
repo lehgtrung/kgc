@@ -2,7 +2,6 @@ import shutup
 shutup.please()
 
 import argparse
-
 import numpy as np
 from tqdm import tqdm
 from reasoning_utils import *
@@ -101,6 +100,13 @@ def get_rank_at(arr, idx):
     return ranks[idx], arr[idx]
 
 
+def mean_rank(arr):
+    mr = 0
+    for rank in arr:
+        mr += rank
+    return 1/len(arr) * mr
+
+
 def mean_reciprocal_rank(arr):
     mrr = 0
     for rank in arr:
@@ -143,8 +149,8 @@ def answer_queries(df: pd.DataFrame, matrix_results: dict, entity_list: list):
         mrr.append(backward_rank)
         values.append(forward_value)
         values.append(backward_value)
-    print('Number of ood = ', out_of_dist_count)
-    print('Number of r33 = ', r33_count)
+    # print('Number of ood = ', out_of_dist_count)
+    # print('Number of r33 = ', r33_count)
     return mrr, values
 
 
@@ -169,6 +175,7 @@ def show_results(mrr, values):
     num_zeros = len([e for e in values if e == 0.0])
     print('Num 0s in values: ', num_zeros)
     print('Percentage 0s in values: ', num_zeros / len(mrr))
+    print('MR: ', mean_rank(mrr))
     print('MRR: ', mean_reciprocal_rank(mrr))
     print('Hit@10: ', hit_at(mrr, 10))
     print('Hit@3: ', hit_at(mrr, 3))
