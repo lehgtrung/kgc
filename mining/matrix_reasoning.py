@@ -89,16 +89,16 @@ def rule_as_mat_mul(adj_mat, rules: dict, n, conf_mode='keep'):
     return matrix_results
 
 
-# def get_rank_at(arr, idx):
-#     sorted_indices = np.argsort(arr, kind='stable')[::-1]
-#     # Create an array of ranks based on the sorted indices
-#     ranks = np.empty(len(arr), int)
-#     ranks[sorted_indices] = np.arange(len(arr)) + 1  # Adding 1 to start ranks from 1
-#     return ranks[idx], arr[idx]
-
-
 def get_rank_at(arr, idx):
-    return rankdata([-e for e in arr], method='ordinal')[idx], arr[idx]
+    sorted_indices = np.argsort(arr, kind='stable')[::-1]
+    # Create an array of ranks based on the sorted indices
+    ranks = np.empty(len(arr), int)
+    ranks[sorted_indices] = np.arange(len(arr)) + 1  # Adding 1 to start ranks from 1
+    return ranks[idx], arr[idx]
+
+
+# def get_rank_at(arr, idx):
+#     return rankdata([-e for e in arr], method='ordinal')[idx], arr[idx]
 
 
 def mean_rank(arr):
