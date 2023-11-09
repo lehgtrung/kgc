@@ -98,6 +98,8 @@ def rule_as_mat_mul(adj_mat, rules: dict, n, conf_mode='keep'):
 #     return ranks[idx], arr[idx]
 
 def get_rank_at(arr, idx):
+    print(arr)
+    print(rankdata(arr))
     return rankdata(arr)[idx]
 
 
