@@ -97,10 +97,6 @@ def get_rank_at(arr, idx):
     return ranks[idx], arr[idx]
 
 
-# def get_rank_at(arr, idx):
-#     return rankdata([-e for e in arr], method='ordinal')[idx], arr[idx]
-
-
 def mean_rank(arr):
     return np.mean(arr)
 
@@ -137,9 +133,7 @@ def answer_queries(df: pd.DataFrame, matrix_results: dict, entity_list: list):
         forward_result = matrix_results[relation][head_idx]
         backward_result = matrix_results[inv_relation][tail_idx]
 
-        # forward_rank = get_rank_at(forward_result, tail_idx)
         forward_rank, forward_value = get_rank_at(forward_result, tail_idx)
-        # backward_rank = get_rank_at(backward_result, head_idx)
         backward_rank, backward_value = get_rank_at(backward_result, head_idx)
 
         mrr.append(forward_rank)
