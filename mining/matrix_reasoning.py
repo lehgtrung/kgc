@@ -175,7 +175,7 @@ if __name__ == '__main__':
     print('============================================')
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", help="Name of dataset", required=True)
-    parser.add_argument("--source", help="Which matrix is used (train/test/all)", required=True)
+    parser.add_argument("--source", help="Which matrix is used (train/test/all)", required=False, default='all')
     parser.add_argument("--rule_path", help="Path to rule set", required=True)
     parser.add_argument("--conf_mode", help="Mode (keep/fixed/random)", required=False, default='keep')
     parser.add_argument("--max_len", help="Rule max length", required=False, type=int, default=3)
