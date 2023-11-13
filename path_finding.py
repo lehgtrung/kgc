@@ -1,5 +1,4 @@
 import argparse
-from py2neo import Graph
 import pandas as pd
 from data_importing import load_data
 from collections import Counter
