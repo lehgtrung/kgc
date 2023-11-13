@@ -49,8 +49,8 @@ def encode_rules(rule_path, max_rank):
 
 
 def compile_data_as_adj_matrix(df: pd.DataFrame,
-                               list_ents: list[str],
-                               list_rels: list[str]):
+                               list_ents,
+                               list_rels):
     n = len(list_ents)
     global_indices = {}
     global_matrix = {}
