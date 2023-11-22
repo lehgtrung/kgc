@@ -88,17 +88,23 @@ def modify_adj_mat(indices, first2remove_idx, second2remove_idx, n):
 
 
 def matmul_with_customized_matrices(rules, global_matrix, n, idx2predict):
-    sub_rules_output = torch.sparse_coo_tensor(torch.Size([n, n])).to(torch.float32)
+    sub_rules_output = torch.sparse_coo_tensor(torch.Size([n, n])).to(torch.float32).to('cuda:0')
     for rule in rules:
         conf = rule['conf']
         body = rule['body']
 
         prod = global_matrix[body[0]]
         for i, rel in enumerate(body[1:]):
-            prod = torch.matmul(prod, global_matrix[rel])
+            prod = torch.matmul(prod, global_matrix[rel]).to('cuda:0')
+        # Eliminate effect of 1 rule multiple path to 1 entity
+        # coalesced_indices = prod.coalesce().indices()
+        # prod = torch.sparse_coo_tensor(coalesced_indices,
+        #                                torch.ones_like(coalesced_indices[0]),
+        #                                torch.Size([n, n])).to(torch.float32)
+        ###########################################
         prod = prod * conf
         sub_rules_output += prod
-    return sub_rules_output[idx2predict].to_dense().numpy()
+    return sub_rules_output[idx2predict].to('cpu').to_dense().numpy()
 
 
 def get_rank_at(arr, idx):
@@ -106,7 +112,8 @@ def get_rank_at(arr, idx):
     # Create an array of ranks based on the sorted indices
     ranks = np.empty(len(arr), int)
     ranks[sorted_indices] = np.arange(len(arr)) + 1  # Adding 1 to start ranks from 1
-    return ranks[idx], arr[idx]
+    return ranks[idx]
+
 
 def mean_rank(arr):
     return np.mean(arr)
@@ -127,26 +134,27 @@ def hit_at(arr, at=10):
 def answer_query(df: pd.DataFrame, complied_rules, global_matrix, global_indices, list_ents):
     ranks = []
     n = len(list_ents)
+    # for i, row in df.iterrows():
     for i, row in tqdm(df.iterrows(), total=len(df)):
         head_idx = list_ents.index(row['head'])
         tail_idx = list_ents.index(row['tail'])
         relation = row['relation']
         inv_relation = row['inv_relation']
 
-        global_matrix[relation] = modify_adj_mat(global_indices[relation], head_idx, tail_idx, n)
-        global_matrix[inv_relation] = modify_adj_mat(global_indices[inv_relation], tail_idx, head_idx, n)
-
         # Answer fwd query
+        global_matrix[relation] = modify_adj_mat(global_indices[relation], head_idx, tail_idx, n)
         rules = complied_rules[relation]
         fwd_answers = matmul_with_customized_matrices(rules, global_matrix, n, head_idx)
         fwd_rank = get_rank_at(fwd_answers, tail_idx)
 
         # Answer bwd query
+        global_matrix[inv_relation] = modify_adj_mat(global_indices[inv_relation], tail_idx, head_idx, n)
         rules = complied_rules[inv_relation]
         bwd_answers = matmul_with_customized_matrices(rules, global_matrix, n, tail_idx)
         bwd_rank = get_rank_at(bwd_answers, head_idx)
 
-        ranks.extend([fwd_rank, bwd_rank])
+        ranks.append(fwd_rank)
+        ranks.append(bwd_rank)
     return ranks
 
 
@@ -161,12 +169,14 @@ def show_results(ranks):
 if __name__ == '__main__':
     print('============================================')
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", help="Name of dataset", required=True)
+    parser.add_argument("--dataset_path", help="path to dataset", required=True)
+    parser.add_argument("--dataset", help="Dataset", required=True)
     parser.add_argument("--rule_path", help="Path to rule set", required=True)
     parser.add_argument("--max_rank", help="Max number of rules used", required=False, type=int, default=10)
 
     args = parser.parse_args()
     dataset = args.dataset
+    dataset_path = args.dataset_path
     max_len = 3
     rule_path = args.rule_path
     max_rank = args.max_rank
@@ -175,8 +185,10 @@ if __name__ == '__main__':
     df_test = load_data_raw(f'{dataset}/test.txt')
     df_valid = load_data_raw(f'{dataset}/valid.txt')
 
-    df_all = pd.concat([df_train, df_valid, df_test], ignore_index=True)
-    # df_all = df_test
+    df_to_test = load_data_raw(dataset_path)
+
+    # df_all = pd.concat([df_train, df_valid, df_test], ignore_index=True)
+    df_all = pd.concat([df_test], ignore_index=True)
 
     list_ents = list(set(df_all['head'].to_list() + df_all['tail'].to_list()))
     list_rels = list(set(df_all['relation'].to_list() + df_all['inv_relation'].to_list()))
@@ -192,7 +204,9 @@ if __name__ == '__main__':
 
     complied_rules = encode_rules(rule_path, max_rank)
     global_matrix, global_indices = compile_data_as_adj_matrix(df_all, list_ents, list_rels)
-    ranks = answer_query(df_all, complied_rules, global_matrix, global_indices, list_ents)
+
+    print("Test result")
+    ranks = answer_query(df_to_test, complied_rules, global_matrix, global_indices, list_ents)
     show_results(ranks)
 
 
